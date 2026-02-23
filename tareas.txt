@@ -1,0 +1,3 @@
+Ponerle una base de datos con postgresql
+
+Ver como funciona lo de jwt

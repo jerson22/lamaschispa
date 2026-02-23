@@ -1,0 +1,271 @@
+body {
+   background-color: #f9a8d4;
+   margin: 0;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+   display: flex;
+   justify-content: space-between;
+   /* logo a la izq, links a la der */
+   align-items: center;
+   /* centra verticalmente */
+   background-color: white;
+   padding: 25px 50px;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-left {
+   display: flex;
+   align-items: center;
+   gap: 15px;
+   /* espacio entre logo e iconos */
+}
+
+.nav-logo {
+   width: 150px;
+   height: auto;
+}
+
+.nav-left a {
+   color: #333;
+   font-size: 1.2rem;
+   text-decoration: none;
+}
+
+.nav-right {
+   display: flex;
+   gap: 40px;
+}
+
+.nav-right a {
+   text-decoration: none;
+   color: #333;
+   font-size: 0.95rem;
+   font-family: "Caveat", cursive;
+   font-size: 1.875rem;
+
+}
+
+.nav-right a:hover {
+   color: #777777;
+}
+
+.fa-icon {
+   color: #777777;
+   font-size: 1.5rem;
+}
+
+.fa-icon:hover {
+   color: #000000;
+}
+
+/* ===== MENÚ HAMBURGUESA (solo visible en móvil) ===== */
+.hamburger {
+   display: none;
+   font-size: 1.5rem;
+   background: none;
+   border: none;
+   cursor: pointer;
+}
+
+/* ===== RESPONSIVO - Móvil ===== */
+@media (max-width: 768px) {
+   .navbar {
+      flex-wrap: wrap;
+      padding: 15px 20px;
+   }
+
+   .nav-right {
+      display: none;
+      /* oculta links en móvil */
+      width: 100%;
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px 0;
+   }
+
+   .nav-right.open {
+      display: flex;
+      /* se muestra cuando se abre el menú */
+   }
+
+   .hamburger {
+      display: block;
+      /* muestra el botón hamburguesa */
+   }
+}
+
+/* ===== VESTIDOS GRID & CARDS ===== */
+.vestidos-container {
+   max-width: 1200px;
+   margin: 40px auto;
+   padding: 0 20px;
+}
+
+.page-title {
+   text-align: center;
+   font-family: "Caveat", cursive;
+   font-size: 3rem;
+   color: #333;
+   margin-bottom: 40px;
+}
+
+.vestidos-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+   gap: 30px;
+}
+
+.vestido-card {
+   background: white;
+   border-radius: 15px;
+   overflow: hidden;
+   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+   transition: transform 0.3s ease, box-shadow 0.3s ease;
+   display: flex;
+   flex-direction: column;
+}
+
+.vestido-card:hover {
+   transform: translateY(-10px);
+   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.vestido-image-container {
+   aspect-ratio: 4 / 5;
+   /* Formato vertical ideal para ropa */
+   width: 100%;
+   background-color: #fce7f3;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   position: relative;
+   overflow: hidden;
+}
+
+.vestido-image {
+   width: 100%;
+   height: 100%;
+   object-fit: contain;
+   /* Cambiado a contain para que se vea todo el vestido sin cortes */
+   background-color: #f7f7f7;
+   /* Un fondo neutro por si la imagen es muy larga */
+}
+
+.vestido-badges {
+   position: absolute;
+   top: 15px;
+   right: 15px;
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+
+.badge-talla {
+   background: white;
+   padding: 4px 10px;
+   border-radius: 8px;
+   font-weight: bold;
+   font-size: 0.8rem;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+   color: #333;
+}
+
+.badge-color {
+   width: 20px;
+   height: 20px;
+   border-radius: 50%;
+   border: 2px solid white;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.vestido-placeholder {
+   font-size: 5rem;
+   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.vestido-info {
+   padding: 20px;
+   flex-grow: 1;
+   display: flex;
+   flex-direction: column;
+}
+
+.vestido-nombre {
+   margin: 0 0 10px 0;
+   font-size: 1.4rem;
+   color: #1f2937;
+   font-family: "Outfit", sans-serif;
+}
+
+.vestido-details {
+   margin-bottom: 20px;
+   font-size: 0.85rem;
+   color: #6b7280;
+}
+
+.vestido-details p {
+   margin: 2px 0;
+}
+
+.vestido-footer {
+   margin-top: auto;
+   display: flex;
+   justify-content: space-between;
+   align-items: flex-end;
+}
+
+.prices {
+   display: flex;
+   flex-direction: column;
+}
+
+.vestido-precio-label {
+   font-size: 0.7rem;
+   color: #9ca3af;
+   text-transform: uppercase;
+   font-weight: bold;
+}
+
+.vestido-precio {
+   font-weight: 800;
+   font-size: 1.4rem;
+   color: #db2777;
+   line-height: 1;
+}
+
+.vestido-precio-small {
+   font-weight: 600;
+   font-size: 1rem;
+   color: #f472b6;
+}
+
+.renta-info {
+   margin-top: 5px;
+}
+
+.vestido-button {
+   background-color: #f472b6;
+   color: white;
+   border: none;
+   padding: 10px 20px;
+   border-radius: 12px;
+   cursor: pointer;
+   font-weight: bold;
+   transition: all 0.2s;
+}
+
+.vestido-button:hover {
+   background-color: #db2777;
+   transform: scale(1.05);
+}
+
+.loading,
+.error,
+.no-data {
+   text-align: center;
+   padding: 50px;
+   font-size: 1.2rem;
+   color: #666;
+}
