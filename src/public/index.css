@@ -13,6 +13,9 @@ body {
    background-color: white;
    padding: 25px 50px;
    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+   position: sticky;
+   top: 0;
+   z-index: 1000;
 }
 
 .nav-left {
@@ -63,38 +66,20 @@ body {
 /* ===== MENÚ HAMBURGUESA (solo visible en móvil) ===== */
 .hamburger {
    display: none;
-   font-size: 1.5rem;
+   font-size: 2rem;
    background: none;
    border: none;
    cursor: pointer;
+   color: #333;
+   /* Forzamos el color negro */
+   -webkit-appearance: none;
+   /* Quitamos estilos por defecto de iOS */
+   appearance: none;
+   padding: 0;
+   line-height: 1;
 }
 
-/* ===== RESPONSIVO - Móvil ===== */
-@media (max-width: 768px) {
-   .navbar {
-      flex-wrap: wrap;
-      padding: 15px 20px;
-   }
 
-   .nav-right {
-      display: none;
-      /* oculta links en móvil */
-      width: 100%;
-      flex-direction: column;
-      gap: 10px;
-      padding: 10px 0;
-   }
-
-   .nav-right.open {
-      display: flex;
-      /* se muestra cuando se abre el menú */
-   }
-
-   .hamburger {
-      display: block;
-      /* muestra el botón hamburguesa */
-   }
-}
 
 /* ===== VESTIDOS GRID & CARDS ===== */
 .vestidos-container {
@@ -268,4 +253,79 @@ body {
    padding: 50px;
    font-size: 1.2rem;
    color: #666;
+}
+
+/* -----------Contenedores de HOME-------------  */
+
+.home-container {
+   max-width: 800px;
+   margin: 40px auto;
+   padding: 40px;
+   border: 3px solid white;
+   border-radius: 30px;
+   background-color: rgba(255, 255, 255, 0.1);
+   /* backdrop-filter: blur(10px); */
+   text-align: center;
+}
+
+.home-container h1 {
+   font-family: 'Caveat', cursive;
+   font-size: 2.5rem;
+   color: #333;
+   margin-bottom: 20px;
+   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.home-container p {
+   font-family: 'Caveat';
+   font-size: 1.5rem;
+   color: #333;
+   line-height: 1.6;
+}
+
+/* ===== RESPONSIVO - Móvil ===== */
+@media (max-width: 768px) {
+   .navbar {
+      flex-wrap: wrap;
+      padding: 15px 20px;
+   }
+
+   .nav-right {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px 0;
+   }
+
+   .nav-right.open {
+      display: flex;
+      color: #333;
+   }
+
+   .hamburger {
+      display: block;
+   }
+
+   .home-container {
+      margin: 10px 10px;
+      padding: 10px 10px;
+      border-width: 2px;
+   }
+
+   .home-container h1 {
+      font-size: 1.5rem;
+   }
+
+   .home-container p {
+      font-size: 1.3rem;
+   }
+
+   .nav-left img {
+      width: 140px;
+   }
+
+   .nav-right a {
+      font-size: 1.5rem;
+   }
 }

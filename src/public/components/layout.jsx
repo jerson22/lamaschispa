@@ -1,9 +1,17 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { FaTiktok, FaInstagram, FaFacebook } from 'react-icons/fa'
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Layout() {
    const [open, setOpen] = useState(false);
+   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+   useEffect(() => {
+      // Verificar conexión cada vez que el componente se monta
+      const token = localStorage.getItem('token');
+      setIsLoggedIn(!!token);
+   });
+
    return (
       <>
          <nav className="navbar">
@@ -18,10 +26,14 @@ export default function Layout() {
                ☰
             </button>
             <div className={`nav-right ${open ? "open" : ""}`}>
-               <a href="/">Quiénes Somos</a>
-               <a href="/vestidos">Vestidos</a>
-               <a href="">Accesorios</a>
-               <a href="">Contacto</a>
+               <Link to="/" onClick={() => setOpen(false)}>Quiénes Somos</Link>
+               <Link to="/vestidos" onClick={() => setOpen(false)}>Vestidos</Link>
+               <Link to="/accesorios" onClick={() => setOpen(false)}>Accesorios</Link>
+               {isLoggedIn ? (
+                  <Link to="/admin" onClick={() => setOpen(false)} style={{ color: '#db2777', fontWeight: 'bold' }}>Admin</Link>
+               ) : (
+                  <Link to="/login" onClick={() => setOpen(false)}>Login</Link>
+               )}
             </div>
          </nav>
          <div>

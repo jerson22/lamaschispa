@@ -1,3 +1,12 @@
-Ponerle una base de datos con postgresql
+/home
+   1. definir el inicio de la pagina con slogan 
 
-Ver como funciona lo de jwt
+/vestidos
+   1. poner un buscador para traer todas las tarjetas por nombre o categoría
+
+
+/admin
+   
+   1. cambiar la ruta imagen/vestido1.jpg por imagen.jpg
+   2. Se tiene que hacer que el formulario acepte imagenes para subir
+   3. definir la estructura para tener varias imágenes por vestido para tener un efecto carrusel 
