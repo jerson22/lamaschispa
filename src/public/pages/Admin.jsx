@@ -17,6 +17,7 @@ const Admin = () => {
    const [loading, setLoading] = useState(true);
    const [uploading, setUploading] = useState(false);
    const [error, setError] = useState(null);
+   const [searchTerm, setSearchTerm] = useState('');
    const navigate = useNavigate();
    const token = localStorage.getItem('token');
 
@@ -155,6 +156,17 @@ const Admin = () => {
 
    if (loading) return <div className="admin-msg">Cargando panel...</div>;
 
+   const productosFiltrados = productos.filter((p) => {
+      const term = searchTerm.toLowerCase();
+      const tipo = (p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'vestido' : 'accesorio';
+      return (
+         p.name.toLowerCase().includes(term) ||
+         p.id.toString().includes(term) ||
+         tipo.includes(term) ||
+         (p.talla && p.talla.toLowerCase().includes(term))
+      );
+   });
+
    return (
       <div className="admin-container">
          <div className="admin-header">
@@ -262,7 +274,16 @@ const Admin = () => {
          </section>
 
          <section className="list-section">
-            <h2>Gestión de Inventario</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
+               <h2 style={{ margin: 0 }}>Gestión de Inventario</h2>
+               <input 
+                  type="text" 
+                  placeholder="Buscar por ID, nombre, tipo o talla..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ padding: '10px 15px', border: '1px solid #ddd', borderRadius: '8px', minWidth: '250px', outline: 'none' }}
+               />
+            </div>
             <div className="admin-table-container">
                <table className="admin-table">
                   <thead>
@@ -277,7 +298,8 @@ const Admin = () => {
                      </tr>
                   </thead>
                   <tbody>
-                     {productos.map(p => (
+                     {productosFiltrados.length > 0 ? (
+                        productosFiltrados.map(p => (
                         <tr key={p.id}>
                            <td>{p.id}</td>
                            <td>{p.name}</td>
@@ -290,7 +312,12 @@ const Admin = () => {
                               <button onClick={() => handleDelete(p.id)} className="delete-btn">Borrar</button>
                            </td>
                         </tr>
-                     ))}
+                     ))
+                     ) : (
+                        <tr>
+                           <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No se encontraron productos con esa búsqueda.</td>
+                        </tr>
+                     )}
                   </tbody>
                </table>
             </div>
@@ -312,6 +339,7 @@ const Admin = () => {
                font-family: 'Caveat', cursive;
                font-size: 2.5rem;
                color: #333;
+               margin: 0;
             }
             .logout-btn {
                background: #666;
@@ -344,12 +372,18 @@ const Admin = () => {
                margin-bottom: 5px;
                color: #555;
             }
-            .admin-form input, .admin-form textarea {
+            .admin-form input:not([type="radio"]), .admin-form textarea {
                width: 100%;
                padding: 10px;
                border: 1px solid #ddd;
                border-radius: 8px;
                outline: none;
+               box-sizing: border-box;
+            }
+            .admin-form input[type="radio"] {
+               width: auto;
+               margin: 0;
+               display: inline-block;
             }
             .form-actions {
                margin-top: 25px;
@@ -376,12 +410,13 @@ const Admin = () => {
             .admin-table-container {
                background: white;
                border-radius: 15px;
-               overflow: hidden;
+               overflow-x: auto;
                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             }
             .admin-table {
                width: 100%;
                border-collapse: collapse;
+               min-width: 600px;
             }
             .admin-table th, .admin-table td {
                padding: 15px;
@@ -413,6 +448,43 @@ const Admin = () => {
                text-align: center;
                padding: 100px;
                font-size: 1.5rem;
+            }
+
+            /* RESPONSIVO MÓVIL */
+            @media (max-width: 768px) {
+               .admin-container {
+                  margin: 20px auto;
+                  padding: 10px;
+               }
+               .admin-header {
+                  flex-direction: column;
+                  gap: 15px;
+                  text-align: center;
+               }
+               .admin-header h1 {
+                  font-size: 2rem;
+               }
+               .form-section {
+                  padding: 20px;
+               }
+               .form-grid {
+                  grid-template-columns: 1fr;
+               }
+               .form-actions {
+                  flex-direction: column;
+               }
+               .save-btn, .cancel-btn {
+                  width: 100%;
+               }
+               .admin-table th, .admin-table td {
+                  padding: 10px;
+                  font-size: 0.9rem;
+               }
+               .edit-btn, .delete-btn {
+                  margin-bottom: 5px;
+                  display: block;
+                  width: 100%;
+               }
             }
          `}</style>
       </div>
