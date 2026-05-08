@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import VestidoCard from '../components/VestidoCard';
+import ProductCard from '../components/ProductCard';
 
 const Vestidos = () => {
    const [vestidos, setVestidos] = useState([]);
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState(null);
+
+   const [searchTerm, setSearchTerm] = useState('');
+   const [selectedColor, setSelectedColor] = useState('');
+   const [selectedTalla, setSelectedTalla] = useState('');
 
    useEffect(() => {
       const fetchVestidos = async () => {
@@ -25,19 +29,58 @@ const Vestidos = () => {
       fetchVestidos();
    }, []);
 
+   const uniqueColors = [...new Set(vestidos.map(v => v.color).filter(Boolean))];
+   const uniqueTallas = [...new Set(vestidos.map(v => v.talla).filter(Boolean))];
+
+   const vestidosFiltrados = vestidos.filter((vestido) => {
+      const matchesSearch = 
+         vestido.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         (vestido.descripcion && vestido.descripcion.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesColor = selectedColor === '' || vestido.color === selectedColor;
+      const matchesTalla = selectedTalla === '' || vestido.talla === selectedTalla;
+
+      return matchesSearch && matchesColor && matchesTalla;
+   });
+
    if (loading) return <div className="loading">Cargando vestidos...</div>;
    if (error) return <div className="error">Error: {error}</div>;
 
    return (
       <div className="vestidos-container">
          <h1 className="page-title">Galería de Vestidos</h1>
+
+         <div className="filtros-container">
+            <input 
+               type="text" 
+               className="filtro-input"
+               placeholder="Buscar por nombre o descripción..." 
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
+            <select className="filtro-select" value={selectedTalla} onChange={(e) => setSelectedTalla(e.target.value)}>
+               <option value="">Todas las Tallas</option>
+               {uniqueTallas.map(talla => (
+                  <option key={talla} value={talla}>{talla}</option>
+               ))}
+            </select>
+
+            <select className="filtro-select" value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)}>
+               <option value="">Todos los Colores</option>
+               {uniqueColors.map(color => (
+                  <option key={color} value={color}>{color}</option>
+               ))}
+            </select>
+         </div>
+
          <div className="vestidos-grid">
-            {vestidos.length > 0 ? (
-               vestidos.map((vestido) => (
-                  <VestidoCard key={vestido.id} vestido={vestido} />
+            {vestidosFiltrados.length > 0 ? (
+               vestidosFiltrados.map((vestido) => (
+                  <ProductCard key={vestido.id} product={vestido} />
                ))
             ) : (
-               <p className="no-data">No hay vestidos disponibles en este momento.</p>
+               <p className="no-data">No se encontraron vestidos con esos filtros.</p>
             )}
          </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Admin = () => {
-   const [vestidos, setVestidos] = useState([]);
+   const [productos, setProductos] = useState([]);
    const [form, setForm] = useState({
       id: null,
       name: '',
@@ -10,10 +10,12 @@ const Admin = () => {
       precio_renta: '',
       color: '',
       talla: '',
-      imagen: '',
-      descripcion: ''
+      imagenes: [''],
+      descripcion: '',
+      vestido: true
    });
    const [loading, setLoading] = useState(true);
+   const [uploading, setUploading] = useState(false);
    const [error, setError] = useState(null);
    const navigate = useNavigate();
    const token = localStorage.getItem('token');
@@ -24,14 +26,14 @@ const Admin = () => {
          navigate('/login');
          return;
       }
-      fetchVestidos();
+      fetchProductos();
    }, [token, navigate]);
 
-   const fetchVestidos = async () => {
+   const fetchProductos = async () => {
       try {
-         const response = await fetch('/api/vestidos');
+         const response = await fetch('/api/productos');
          const data = await response.json();
-         setVestidos(data);
+         setProductos(data);
       } catch (err) {
          setError('Error al cargar datos');
       } finally {
@@ -46,7 +48,7 @@ const Admin = () => {
    const handleSubmit = async (e) => {
       e.preventDefault();
       const method = form.id ? 'PUT' : 'POST';
-      const url = form.id ? `/api/vestidos/${form.id}` : '/api/vestidos';
+      const url = form.id ? `/api/productos/${form.id}` : '/api/productos';
 
       try {
          const response = await fetch(url, {
@@ -59,9 +61,9 @@ const Admin = () => {
          });
 
          if (response.ok) {
-            alert(form.id ? 'Vestido actualizado' : 'Vestido creado');
-            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagen: '', descripcion: '' });
-            fetchVestidos();
+            alert(form.id ? 'Producto actualizado' : 'Producto creado');
+            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true });
+            fetchProductos();
          } else {
             const data = await response.json();
             alert(data.error || 'Error en la operación');
@@ -72,26 +74,77 @@ const Admin = () => {
    };
 
    const handleEdit = (v) => {
-      setForm(v);
+      setForm({
+         ...v,
+         vestido: v.vestido === '1' || v.vestido === true || v.vestido === 1,
+         imagenes: v.imagenes && v.imagenes.length > 0 ? v.imagenes : ['']
+      });
       window.scrollTo({ top: 0, behavior: 'smooth' });
    };
 
    const handleDelete = async (id) => {
-      if (!window.confirm('¿Seguro que quieres eliminar este vestido?')) return;
+      if (!window.confirm('¿Seguro que quieres eliminar este producto?')) return;
 
       try {
-         const response = await fetch(`/api/vestidos/${id}`, {
+         const response = await fetch(`/api/productos/${id}`, {
             method: 'DELETE',
             headers: { 'auth-token': token }
          });
 
          if (response.ok) {
-            fetchVestidos();
+            fetchProductos();
          } else {
             alert('No se pudo eliminar');
          }
       } catch (err) {
          alert('Error de conexión');
+      }
+   };
+
+   const handleImageChange = (index, value) => {
+      const newImagenes = [...form.imagenes];
+      newImagenes[index] = value;
+      setForm({ ...form, imagenes: newImagenes });
+   };
+
+   const addImageInput = () => {
+      setForm({ ...form, imagenes: [...form.imagenes, ''] });
+   };
+
+   const removeImageInput = (index) => {
+      if (form.imagenes.length > 1) {
+         const newImagenes = form.imagenes.filter((_, i) => i !== index);
+         setForm({ ...form, imagenes: newImagenes });
+      }
+   };
+
+   const handleFileUpload = async (e) => {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      
+      setUploading(true);
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+          formData.append('images', files[i]);
+      }
+
+      try {
+          const response = await fetch('/api/upload', {
+              method: 'POST',
+              headers: { 'auth-token': token },
+              body: formData
+          });
+          const data = await response.json();
+          if (response.ok) {
+              const filteredImagenes = form.imagenes.filter(img => img.trim() !== '');
+              setForm({ ...form, imagenes: [...filteredImagenes, ...data.filenames] });
+          } else {
+              alert(data.error || 'Error al subir imágenes');
+          }
+      } catch (err) {
+          alert('Error de conexión al subir imágenes');
+      } finally {
+          setUploading(false);
       }
    };
 
@@ -110,11 +163,34 @@ const Admin = () => {
          </div>
 
          <section className="form-section">
-            <h2>{form.id ? 'Editar Vestido' : 'Subir Nuevo Vestido'}</h2>
+            <h2>{form.id ? 'Editar Producto' : 'Subir Nuevo Producto'}</h2>
             <form onSubmit={handleSubmit} className="admin-form">
+               <div className="input-group full-width" style={{ marginBottom: '20px' }}>
+                  <label>Tipo de Producto</label>
+                  <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'normal', cursor: 'pointer' }}>
+                        <input 
+                           type="radio" 
+                           name="vestido" 
+                           checked={form.vestido === true} 
+                           onChange={() => setForm({ ...form, vestido: true })} 
+                        />
+                        Vestido
+                     </label>
+                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'normal', cursor: 'pointer' }}>
+                        <input 
+                           type="radio" 
+                           name="vestido" 
+                           checked={form.vestido === false} 
+                           onChange={() => setForm({ ...form, vestido: false })} 
+                        />
+                        Accesorio
+                     </label>
+                  </div>
+               </div>
                <div className="form-grid">
                   <div className="input-group">
-                     <label>Nombre del Vestido</label>
+                     <label>Nombre del Producto</label>
                      <input name="name" value={form.name} onChange={handleChange} required />
                   </div>
                   <div className="input-group">
@@ -129,22 +205,58 @@ const Admin = () => {
                      <label>Color</label>
                      <input name="color" value={form.color} onChange={handleChange} required />
                   </div>
-                  <div className="input-group">
-                     <label>Talla</label>
-                     <input name="talla" value={form.talla} onChange={handleChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>URL Imagen</label>
-                     <input name="imagen" value={form.imagen} onChange={handleChange} placeholder="vestido1.jpg" />
-                  </div>
+                  {form.vestido && (
+                     <div className="input-group">
+                        <label>Talla</label>
+                        <input name="talla" value={form.talla} onChange={handleChange} required />
+                     </div>
+                  )}
                </div>
-               <div className="input-group full-width">
+               
+               <div className="input-group full-width" style={{ marginTop: '20px' }}>
+                  <label>Fotos (en orden de aparición)</label>
+                  
+                  <div style={{ border: '2px dashed #db2777', padding: '20px', borderRadius: '10px', textAlign: 'center', backgroundColor: '#fdf2f8', position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.3s' }}>
+                     <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*" 
+                        onChange={handleFileUpload} 
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
+                        disabled={uploading}
+                     />
+                     <p style={{ margin: 0, color: '#db2777', fontWeight: 'bold' }}>
+                        {uploading ? 'Subiendo archivos...' : 'Arrastra tus fotos aquí o haz clic para subir 📁'}
+                     </p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                     {form.imagenes.map((img, index) => (
+                        <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                           <span style={{ padding: '8px 12px', background: '#fdf2f8', color: '#db2777', borderRadius: '5px', fontWeight: 'bold' }}>{index + 1}</span>
+                           <input 
+                              value={img} 
+                              onChange={(e) => handleImageChange(index, e.target.value)} 
+                              placeholder={`Ej. foto_${index + 1}.jpg`} 
+                              style={{ flex: 1 }}
+                              required={index === 0}
+                           />
+                           {form.imagenes.length > 1 && (
+                              <button type="button" onClick={() => removeImageInput(index)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }} title="Quitar foto">X</button>
+                           )}
+                        </div>
+                     ))}
+                  </div>
+                  <button type="button" onClick={addImageInput} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', marginTop: '10px', fontWeight: 'bold', width: 'fit-content' }}>+ Añadir URL manualmente</button>
+               </div>
+
+               <div className="input-group full-width" style={{ marginTop: '20px' }}>
                   <label>Descripción</label>
                   <textarea name="descripcion" value={form.descripcion} onChange={handleChange} rows="3"></textarea>
                </div>
                <div className="form-actions">
-                  <button type="submit" className="save-btn">{form.id ? 'Guardar Cambios' : 'Publicar Vestido'}</button>
-                  {form.id && <button type="button" onClick={() => setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagen: '', descripcion: '' })} className="cancel-btn">Cancelar</button>}
+                  <button type="submit" className="save-btn">{form.id ? 'Guardar Cambios' : 'Publicar Producto'}</button>
+                  {form.id && <button type="button" onClick={() => setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true })} className="cancel-btn">Cancelar</button>}
                </div>
             </form>
          </section>
@@ -157,6 +269,7 @@ const Admin = () => {
                      <tr>
                         <th>ID</th>
                         <th>Nombre</th>
+                        <th>Tipo</th>
                         <th>Venta</th>
                         <th>Renta</th>
                         <th>Talla</th>
@@ -164,16 +277,17 @@ const Admin = () => {
                      </tr>
                   </thead>
                   <tbody>
-                     {vestidos.map(v => (
-                        <tr key={v.id}>
-                           <td>{v.id}</td>
-                           <td>{v.name}</td>
-                           <td>${v.precio_venta}</td>
-                           <td>${v.precio_renta}</td>
-                           <td>{v.talla}</td>
+                     {productos.map(p => (
+                        <tr key={p.id}>
+                           <td>{p.id}</td>
+                           <td>{p.name}</td>
+                           <td>{(p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'Vestido' : 'Accesorio'}</td>
+                           <td>${p.precio_venta}</td>
+                           <td>${p.precio_renta}</td>
+                           <td>{p.talla || '-'}</td>
                            <td>
-                              <button onClick={() => handleEdit(v)} className="edit-btn">Editar</button>
-                              <button onClick={() => handleDelete(v.id)} className="delete-btn">Borrar</button>
+                              <button onClick={() => handleEdit(p)} className="edit-btn">Editar</button>
+                              <button onClick={() => handleDelete(p.id)} className="delete-btn">Borrar</button>
                            </td>
                         </tr>
                      ))}

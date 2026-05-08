@@ -11,7 +11,7 @@ body {
    align-items: center;
    /* centra verticalmente */
    background-color: white;
-   padding: 25px 50px;
+   padding: 10px 50px;
    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
    position: sticky;
    top: 0;
@@ -81,7 +81,7 @@ body {
 
 
 
-/* ===== VESTIDOS GRID & CARDS ===== */
+/* ===== PRODUCTS GRID & CARDS ===== */
 .vestidos-container {
    max-width: 1200px;
    margin: 40px auto;
@@ -96,13 +96,57 @@ body {
    margin-bottom: 40px;
 }
 
+.filtros-container {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 15px;
+   margin-bottom: 30px;
+   background: white;
+   padding: 15px 20px;
+   border-radius: 15px;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+   align-items: center;
+}
+
+.filtro-input {
+   flex: 1;
+   min-width: 200px;
+   padding: 10px 15px;
+   border: 1px solid #e5e7eb;
+   border-radius: 10px;
+   font-family: "Outfit", sans-serif;
+   font-size: 1rem;
+   outline: none;
+   transition: border-color 0.2s;
+}
+
+.filtro-input:focus {
+   border-color: #db2777;
+}
+
+.filtro-select {
+   padding: 10px 15px;
+   border: 1px solid #e5e7eb;
+   border-radius: 10px;
+   font-family: "Outfit", sans-serif;
+   font-size: 1rem;
+   outline: none;
+   background-color: white;
+   cursor: pointer;
+   min-width: 140px;
+}
+
+.filtro-select:focus {
+   border-color: #db2777;
+}
+
 .vestidos-grid {
    display: grid;
    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
    gap: 30px;
 }
 
-.vestido-card {
+.product-card {
    background: white;
    border-radius: 15px;
    overflow: hidden;
@@ -112,16 +156,17 @@ body {
    flex-direction: column;
 }
 
-.vestido-card:hover {
+.product-card:hover {
    transform: translateY(-10px);
    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
-.vestido-image-container {
-   aspect-ratio: 4 / 5;
-   /* Formato vertical ideal para ropa */
+.product-image-container {
+   aspect-ratio: 9 / 16;
+   /* aspect-ratio: 2 / 3; */
+   /* Formato vertical estilizado (tipo mobile/TikTok) para vestidos */
    width: 100%;
-   background-color: #fce7f3;
+   background-color: #f7f7f7;
    display: flex;
    align-items: center;
    justify-content: center;
@@ -129,16 +174,20 @@ body {
    overflow: hidden;
 }
 
-.vestido-image {
+.product-image-container.is-accessory {
+   aspect-ratio: 1 / 1;
+   /* Tamaño cuadrado para accesorios */
+}
+
+.product-image {
    width: 100%;
    height: 100%;
    object-fit: contain;
-   /* Cambiado a contain para que se vea todo el vestido sin cortes */
-   background-color: #f7f7f7;
-   /* Un fondo neutro por si la imagen es muy larga */
+   /* Asegura que se vea todo el producto sin recortes */
+   display: block;
 }
 
-.vestido-badges {
+.product-badges {
    position: absolute;
    top: 15px;
    right: 15px;
@@ -165,36 +214,94 @@ body {
    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.vestido-placeholder {
+.product-placeholder {
    font-size: 5rem;
    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
-.vestido-info {
+/* Carrusel Styles */
+.carousel-button {
+   position: absolute;
+   top: 50%;
+   transform: translateY(-50%);
+   background: rgba(255, 255, 255, 0.7);
+   border: none;
+   border-radius: 50%;
+   width: 32px;
+   height: 32px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   color: #db2777;
+   font-size: 1.2rem;
+   transition: all 0.2s;
+   z-index: 10;
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-button:hover {
+   background: white;
+   transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-button.prev {
+   left: 10px;
+}
+
+.carousel-button.next {
+   right: 10px;
+}
+
+.carousel-dots {
+   position: absolute;
+   bottom: 10px;
+   left: 50%;
+   transform: translateX(-50%);
+   display: flex;
+   gap: 6px;
+   z-index: 10;
+}
+
+.dot {
+   width: 8px;
+   height: 8px;
+   border-radius: 50%;
+   background: rgba(255, 255, 255, 0.5);
+   cursor: pointer;
+   transition: all 0.2s;
+}
+
+.dot.active {
+   background: #db2777;
+   transform: scale(1.2);
+}
+
+.product-info {
    padding: 20px;
    flex-grow: 1;
    display: flex;
    flex-direction: column;
 }
 
-.vestido-nombre {
+.product-nombre {
    margin: 0 0 10px 0;
    font-size: 1.4rem;
    color: #1f2937;
    font-family: "Outfit", sans-serif;
 }
 
-.vestido-details {
+.product-details {
    margin-bottom: 20px;
    font-size: 0.85rem;
    color: #6b7280;
 }
 
-.vestido-details p {
+.product-details p {
    margin: 2px 0;
 }
 
-.vestido-footer {
+.product-footer {
    margin-top: auto;
    display: flex;
    justify-content: space-between;
@@ -206,21 +313,21 @@ body {
    flex-direction: column;
 }
 
-.vestido-precio-label {
+.product-precio-label {
    font-size: 0.7rem;
    color: #9ca3af;
    text-transform: uppercase;
    font-weight: bold;
 }
 
-.vestido-precio {
+.product-precio {
    font-weight: 800;
    font-size: 1.4rem;
    color: #db2777;
    line-height: 1;
 }
 
-.vestido-precio-small {
+.product-precio-small {
    font-weight: 600;
    font-size: 1rem;
    color: #f472b6;
@@ -230,7 +337,7 @@ body {
    margin-top: 5px;
 }
 
-.vestido-button {
+.product-button {
    background-color: #f472b6;
    color: white;
    border: none;
@@ -241,7 +348,7 @@ body {
    transition: all 0.2s;
 }
 
-.vestido-button:hover {
+.product-button:hover {
    background-color: #db2777;
    transform: scale(1.05);
 }
