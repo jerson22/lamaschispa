@@ -142,7 +142,7 @@ body {
 
 .vestidos-grid {
    display: grid;
-   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+   grid-template-columns: repeat(4, 1fr);
    gap: 30px;
 }
 
@@ -162,8 +162,9 @@ body {
 }
 
 .product-image-container {
-   aspect-ratio: 9 / 16;
-   /* aspect-ratio: 2 / 3; */
+   /*aspect-ratio: 9 / 16;*/
+   aspect-ratio: 5 / 7; 
+   object-fit: cover;
    /* Formato vertical estilizado (tipo mobile/TikTok) para vestidos */
    width: 100%;
    background-color: #f7f7f7;
