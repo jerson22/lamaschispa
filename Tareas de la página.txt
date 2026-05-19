@@ -1,41 +1,3 @@
-Tareas de la página
-Nvim:
-- plugins de github para aprender a hacer un pull y post
-- plugins para identacion y saber donde se abre y cierra un paréntesis, corchete, etc.
-
-<<<<<<< HEAD
-Hechas:
-- Reajustar el formulario de subida a uno de productos
-   - Poder subir varias fotos a la vez
-- Poner un buscador en la sección de Vestidos y Accesorios
-
-Pendientes:
-- Modificar la gestión de inventario a los nuevos requerimientos:
-   - Poner 4 fotos en página (en celular aún está por revisar)
-   - Poner calendario de estatus del vestido
-   - Buscador de colores con colores de una paleta
-   - Características en el buscador:
-      - mangas
-      - strapless
-      - tirante
-   - Característica "Silueta":
-      - Corte A
-      - Corte Sirena
-      - Corte Recto
-
-- Flecha para regresar hasta arriba
-- Relación 5:7 para todo Vestidos y Accesorios
-
-Futuras:
-- Gestionar las rentas que hace la tienda:
-   - Tener una sección donde Abi pueda ver cuáles vestidos se rentan en un calendario y el proceso en el que están (haciendo ajustes, planchado).
-- Llevar un resumen general de ventas que pueda exportarse en Excel en todo momento.
-- Gestión de usuarios para rentar y comprar en línea, también para reservar citas.
-- Recomendación de tipos y color de vestidos que faltan en la tienda, mostrando una gráfica de pastel de lo que más hay.
-
-Condicionales:
-- Cuando los productos suban a 1000-2000, es mejor hacer que el filtrado en las búsquedas lo haga directamente la base de datos en lugar de traer todo y filtrar en el frontend.
-=======
 x Reajustar el fomrulario de subida a uno de productos
    Poder subr varias fotos a la vez
 
@@ -57,7 +19,7 @@ x caracteristica de silueta
 - Poner una Página abierta para poder mostrar mas contenido del vestido o producto
 - flecha para regresar hasta arriba 
 x relacion 5:7 para todo Vestidos y accesorios
-
+- ajustar el formulario para que suba tambien mangas y cortes
 
 Acatualizaciónes futuras
 - gestionar las rentas que hace la tienda
@@ -68,6 +30,5 @@ Acatualizaciónes futuras
 
 
 Actualizaciones con condicion
-- cuando los productos suban a 1000-2000 es mejor hacer que el filtrado en las busquedas
-   lo  haga directamente la base de datos en lugar de traer todo y filtrar en el frontend.
->>>>>>> 509616fc05043a02ce2b9918b77811b07caae1ef
+- cuando los productos suban a 1000-2000 es mejor hacer que el filtrado en las busquedas 
+  lo  haga directamente la base de datos en lugar de traer todo y filtrar en el frontend.

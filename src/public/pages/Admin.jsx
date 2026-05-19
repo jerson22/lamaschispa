@@ -8,6 +8,8 @@ const Admin = () => {
       name: '',
       precio_venta: '',
       precio_renta: '',
+	  silueta: '',
+	  mangas: '',
       color: '',
       talla: '',
       imagenes: [''],
@@ -63,7 +65,7 @@ const Admin = () => {
 
          if (response.ok) {
             alert(form.id ? 'Producto actualizado' : 'Producto creado');
-            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true });
+            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', silueta:'', mangas:'', imagenes: [''], descripcion: '', vestido: true });
             fetchProductos();
          } else {
             const data = await response.json();
@@ -218,10 +220,25 @@ const Admin = () => {
                      <input name="color" value={form.color} onChange={handleChange} required />
                   </div>
                   {form.vestido && (
-                     <div className="input-group">
-                        <label>Talla</label>
-                        <input name="talla" value={form.talla} onChange={handleChange} required />
-                     </div>
+					  <>
+						 <div className="input-group">
+						    <label>Talla</label>
+						    <input name="talla" value={form.talla} onChange={handleChange} required />
+						 </div>
+						 <div className="input-group">
+						    <label>Silueta</label>
+					  		<select	className="filtro-select" name="silueta" value={form.silueta} onChange={handleChange} required> 
+					  			<option value="">Selecciona una silueta</option>
+					  			<option value="a">Corte A</option>
+					  			<option value="sirena">Corte Sirena</option>
+					  			<option value="recto">Corte Recto</option>
+						    </select>
+						 </div>
+						 <div className="input-group">
+							<label>Mangas</label>
+							<input name="Mangas" value={form.silueta} onChange={handleChange} required />
+						 </div>
+					  </>
                   )}
                </div>
                
