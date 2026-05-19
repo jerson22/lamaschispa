@@ -9,6 +9,8 @@ const Vestidos = () => {
    const [searchTerm, setSearchTerm] = useState('');
    const [selectedColor, setSelectedColor] = useState('');
    const [selectedTalla, setSelectedTalla] = useState('');
+   const [selectedSilueta, setSelectedSilueta] = useState('');
+   const [selectedMangas, setSelectedMangas] = useState('');
 
    useEffect(() => {
       const fetchVestidos = async () => {
@@ -31,16 +33,20 @@ const Vestidos = () => {
 
    const uniqueColors = [...new Set(vestidos.map(v => v.color).filter(Boolean))];
    const uniqueTallas = [...new Set(vestidos.map(v => v.talla).filter(Boolean))];
+   const uniqueSiluetas = [...new Set(vestidos.map(v => v.silueta).filter(Boolean))];
+   const uniqueMangas = [...new Set(vestidos.map(v => v.mangas).filter(Boolean))];
 
    const vestidosFiltrados = vestidos.filter((vestido) => {
-      const matchesSearch = 
-         vestido.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      const matchesSearch =
+         vestido.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
          (vestido.descripcion && vestido.descripcion.toLowerCase().includes(searchTerm.toLowerCase()));
-      
+
       const matchesColor = selectedColor === '' || vestido.color === selectedColor;
       const matchesTalla = selectedTalla === '' || vestido.talla === selectedTalla;
+      const matchesSilueta = selectedSilueta === '' || vestido.silueta === selectedSilueta;
+      const matchesMangas = selectedMangas === '' || vestido.mangas === selectedMangas;
 
-      return matchesSearch && matchesColor && matchesTalla;
+      return matchesSearch && matchesColor && matchesTalla && matchesSilueta && matchesMangas;
    });
 
    if (loading) return <div className="loading">Cargando vestidos...</div>;
@@ -51,10 +57,10 @@ const Vestidos = () => {
          <h1 className="page-title">Galería de Vestidos</h1>
 
          <div className="filtros-container">
-            <input 
-               type="text" 
+            <input
+               type="text"
                className="filtro-input"
-               placeholder="Buscar por nombre o descripción..." 
+               placeholder="Buscar por nombre o descripción..."
                value={searchTerm}
                onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -70,6 +76,20 @@ const Vestidos = () => {
                <option value="">Todos los Colores</option>
                {uniqueColors.map(color => (
                   <option key={color} value={color}>{color}</option>
+               ))}
+            </select>
+
+            <select className="filtro-select" value={selectedSilueta} onChange={(e) => setSelectedSilueta(e.target.value)}>
+               <option value="">Todas las Siluetas</option>
+               {uniqueSiluetas.map(silueta => (
+                  <option key={silueta} value={silueta}>{silueta}</option>
+               ))}
+            </select>
+
+            <select className="filtro-select" value={selectedMangas} onChange={(e) => setSelectedMangas(e.target.value)}>
+               <option value="">Todas las Mangas</option>
+               {uniqueMangas.map(mangas => (
+                  <option key={mangas} value={mangas}>{mangas}</option>
                ))}
             </select>
          </div>

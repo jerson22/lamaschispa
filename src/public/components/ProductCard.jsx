@@ -61,7 +61,7 @@ export default function ProductCard({ product }) {
             <div className="product-details">
                {product.color && <p><strong>Color:</strong> {product.color}</p>}
                {product.talla && (<p><strong>Talla:</strong> {product.talla}</p>)}
-               <p>{product.descripcion}</p>
+               {/* <p>{product.descripcion}</p> */}
             </div>
             <div className="product-footer">
                <div className="prices">
