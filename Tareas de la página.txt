@@ -3,6 +3,7 @@ Nvim:
 - plugins de github para aprender a hacer un pull y post
 - plugins para identacion y saber donde se abre y cierra un paréntesis, corchete, etc.
 
+<<<<<<< HEAD
 Hechas:
 - Reajustar el formulario de subida a uno de productos
    - Poder subir varias fotos a la vez
@@ -34,3 +35,39 @@ Futuras:
 
 Condicionales:
 - Cuando los productos suban a 1000-2000, es mejor hacer que el filtrado en las búsquedas lo haga directamente la base de datos en lugar de traer todo y filtrar en el frontend.
+=======
+x Reajustar el fomrulario de subida a uno de productos
+   Poder subr varias fotos a la vez
+
+x Poner un Buscador en la seccion de Vestidos y Accesorios
+
+x Modificar la gestion de inventario a las nuevos requerimientos
+x Poner 4 fotos en pagina y en celular aun esta por revisar
+- Poner calendario de estatus del vestido, que pueda ver las fotos de las entregas
+- buscador de colores con colores de una paleta
+x caracteristicas de mangas
+   mangas
+   manga caida
+   strapless
+   tirante
+x caracteristica de silueta
+   corte A
+   Corte sirena
+   Corte Recto
+- Poner una Página abierta para poder mostrar mas contenido del vestido o producto
+- flecha para regresar hasta arriba 
+x relacion 5:7 para todo Vestidos y accesorios
+
+
+Acatualizaciónes futuras
+- gestionar las rentas que hace la tienda
+   tener una seccion donde Abi puede ver cuales vestidos se rentan en un calendario y el proceso en el que esta(haciendo ajustes, planchado)
+- llevar un resumen general de ventas que pueda exportarse en excel en todo momento
+- gestion de usuarios para poder renta y comprar en linea, también para reservar citas 
+- Recomendación de tipos y color de vestidos que faltan en la tienda, mostrar una grafica de pastel de lo que mas hay 
+
+
+Actualizaciones con condicion
+- cuando los productos suban a 1000-2000 es mejor hacer que el filtrado en las busquedas
+   lo  haga directamente la base de datos en lugar de traer todo y filtrar en el frontend.
+>>>>>>> 509616fc05043a02ce2b9918b77811b07caae1ef

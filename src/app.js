@@ -12,8 +12,8 @@ const fs = require('fs');
 const storage = multer.diskStorage({
    destination: function (req, file, cb) {
       const dir = path.join(__dirname, 'public', 'images');
-      if (!fs.existsSync(dir)){
-          fs.mkdirSync(dir, { recursive: true });
+      if (!fs.existsSync(dir)) {
+         fs.mkdirSync(dir, { recursive: true });
       }
       cb(null, dir);
    },
@@ -34,11 +34,11 @@ app.use('/auth', authRoutes);
 // Endpoint para subir imágenes rápidamente
 app.post('/api/upload', verificarToken, esAdmin, upload.array('images', 10), (req, res) => {
    try {
-       const filenames = req.files.map(f => f.filename);
-       res.json({ filenames });
+      const filenames = req.files.map(f => f.filename);
+      res.json({ filenames });
    } catch (error) {
-       console.error(error);
-       res.status(500).json({ error: 'Error al subir las imágenes' });
+      console.error(error);
+      res.status(500).json({ error: 'Error al subir las imágenes' });
    }
 });
 
@@ -54,12 +54,12 @@ app.post('/api/productos', verificarToken, esAdmin, async (req, res) => {
 
       let imagesInserted = [];
       if (imagenes && imagenes.length > 0) {
-          for (let i = 0; i < imagenes.length; i++) {
-             if (!imagenes[i]) continue;
-             const imgQuery = 'INSERT INTO imagen_productos (id_imagen, name, orden) VALUES ($1, $2, $3) RETURNING name';
-             const imgResult = await db.query(imgQuery, [producto_id, imagenes[i], i + 1]);
-             imagesInserted.push(imgResult.rows[0].name);
-          }
+         for (let i = 0; i < imagenes.length; i++) {
+            if (!imagenes[i]) continue;
+            const imgQuery = 'INSERT INTO imagen_productos (id_imagen, name, orden) VALUES ($1, $2, $3) RETURNING name';
+            const imgResult = await db.query(imgQuery, [producto_id, imagenes[i], i + 1]);
+            imagesInserted.push(imgResult.rows[0].name);
+         }
       }
       await db.query('COMMIT');
       res.status(201).json({ mensaje: "Producto creado", producto: { ...result.rows[0], imagenes: imagesInserted } });
@@ -88,14 +88,13 @@ app.put('/api/productos/:id', verificarToken, esAdmin, async (req, res) => {
       await db.query('DELETE FROM imagen_productos WHERE id_imagen = $1', [id]);
       let imagesInserted = [];
       if (imagenes && imagenes.length > 0) {
-          for (let i = 0; i < imagenes.length; i++) {
-             if (!imagenes[i]) continue;
-             const imgQuery = 'INSERT INTO imagen_productos (id_imagen, name, orden) VALUES ($1, $2, $3) RETURNING name';
-             const imgResult = await db.query(imgQuery, [id, imagenes[i], i + 1]);
-             imagesInserted.push(imgResult.rows[0].name);
-          }
+         for (let i = 0; i < imagenes.length; i++) {
+            if (!imagenes[i]) continue;
+            const imgQuery = 'INSERT INTO imagen_productos (id_imagen, name, orden) VALUES ($1, $2, $3) RETURNING name';
+            const imgResult = await db.query(imgQuery, [id, imagenes[i], i + 1]);
+            imagesInserted.push(imgResult.rows[0].name);
+         }
       }
-      
       await db.query('COMMIT');
       res.json({ mensaje: "Producto actualizado", producto: { ...result.rows[0], imagenes: imagesInserted } });
    } catch (error) {
@@ -140,6 +139,34 @@ app.get('/api/productos', async (req, res) => {
    } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error al obtener los productos' });
+   }
+});
+
+// Endpoint para obtener un producto por ID
+app.get('/api/productos/:id', async (req, res) => {
+   const { id } = req.params;
+   try {
+      const query = `
+         SELECT p.*, 
+               COALESCE(
+                  (SELECT json_agg(ia.name ORDER BY ia.orden) 
+                  FROM imagen_productos ia 
+                  WHERE ia.id_imagen = p.id), 
+                  '[]'
+               ) as imagenes
+         FROM productos p 
+         WHERE p.id = $1
+      `;
+      const result = await db.query(query, [id]);
+      
+      if (result.rows.length === 0) {
+         return res.status(404).json({ error: "Producto no encontrado" });
+      }
+
+      res.json(result.rows[0]);
+   } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al obtener el producto' });
    }
 });
 
