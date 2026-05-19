@@ -7,20 +7,20 @@ x Poner un Buscador en la seccion de Vestidos y Accesorios
 
 x Modificar la gestion de inventario a las nuevos requerimientos
 x Poner 4 fotos en pagina y en celular aun esta por revisar
-- Poner calendario de estatus del vestido
+- Poner calendario de estatus del vestido, que pueda ver las fotos de las entregas
 - buscador de colores con colores de una paleta
-- caracteristicas de mangas
+x caracteristicas de mangas
    mangas
    manga caida
    strapless
    tirante
-- caracteristica de silueta
+x caracteristica de silueta
    corte A
    Corte sirena
    Corte Recto
-
+- Poner una Página abierta para poder mostrar mas contenido del vestido o producto
 - flecha para regresar hasta arriba 
-- relacion 5:7 para todo Vestidos y accesorios
+x relacion 5:7 para todo Vestidos y accesorios
 
 
 Acatualizaciónes futuras

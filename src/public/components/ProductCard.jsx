@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProductCard({ product }) {
    const [currentIndex, setCurrentIndex] = useState(0);
+   const navigate = useNavigate();
 
    // Unificar fuentes de imagen: puede ser un array de nombres de imagen (imagenes) o un solo nombre (imagen)
    const imagenes = product.imagenes && product.imagenes.length > 0
@@ -74,7 +76,7 @@ export default function ProductCard({ product }) {
                      </div>
                   )}
                </div>
-               <button className="product-button">Ver</button>
+               <button className="product-button" onClick={() => navigate(`/producto/${product.id}`)}>Ver</button>
             </div>
          </div>
       </div>

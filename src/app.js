@@ -142,6 +142,34 @@ app.get('/api/productos', async (req, res) => {
    }
 });
 
+// Endpoint para obtener un producto por ID
+app.get('/api/productos/:id', async (req, res) => {
+   const { id } = req.params;
+   try {
+      const query = `
+         SELECT p.*, 
+               COALESCE(
+                  (SELECT json_agg(ia.name ORDER BY ia.orden) 
+                  FROM imagen_productos ia 
+                  WHERE ia.id_imagen = p.id), 
+                  '[]'
+               ) as imagenes
+         FROM productos p 
+         WHERE p.id = $1
+      `;
+      const result = await db.query(query, [id]);
+      
+      if (result.rows.length === 0) {
+         return res.status(404).json({ error: "Producto no encontrado" });
+      }
+
+      res.json(result.rows[0]);
+   } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al obtener el producto' });
+   }
+});
+
 app.get('/', (req, res) => {
    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
