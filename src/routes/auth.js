@@ -53,4 +53,19 @@ router.post('/login', async (req, res) => {
    }
 });
 
+// Ruta para validar token (verificar que siga siendo válido)
+router.get('/validate', (req, res) => {
+   const token = req.header('auth-token');
+   if (!token) return res.status(401).json({ error: 'No hay token' });
+
+   try {
+      const verificado = jwt.verify(token, process.env.JWT_SECRET);
+      // Si llegamos aquí, el token es válido
+      res.json({ valid: true, user: { id: verificado.id, rol: verificado.rol } });
+   } catch (error) {
+      // Token inválido, expirado, o malformado
+      res.status(401).json({ error: 'Token inválido o expirado' });
+   }
+});
+
 module.exports = router;

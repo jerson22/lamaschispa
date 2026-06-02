@@ -3,18 +3,37 @@ import { useNavigate } from 'react-router-dom';
 
 const Admin = () => {
    const [productos, setProductos] = useState([]);
+   const [clientes, setClientes] = useState([]);
    const [form, setForm] = useState({
       id: null,
       name: '',
       precio_venta: '',
       precio_renta: '',
-	  silueta: '',
-	  mangas: '',
+      silueta: '',
+      mangas: '',
       color: '',
       talla: '',
       imagenes: [''],
       descripcion: '',
       vestido: true
+   });
+   const [clientForm, setClientForm] = useState({
+      nombre: '',
+      telefono: '',
+      email: '',
+      direccion: ''
+   });
+   const [reserveForm, setReserveForm] = useState({
+      clienteId: '',
+      fechaEvento: '',
+      fechaEntrega: '',
+      fechaDevolucion: '',
+      estado: 'pendiente_medidas',
+      total: '',
+      tipo: 'renta',
+      items: [
+         { productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }
+      ]
    });
    const [loading, setLoading] = useState(true);
    const [uploading, setUploading] = useState(false);
@@ -23,24 +42,104 @@ const Admin = () => {
    const navigate = useNavigate();
    const token = localStorage.getItem('token');
 
+   // Función para limpiar sesión
+   const clearSession = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+   };
+
+   // Función para verificar si la respuesta es un error de autenticación
+   const handleAuthError = (response) => {
+      if (response.status === 401 || response.status === 403) {
+         clearSession();
+         return true;
+      }
+      return false;
+   };
+
    useEffect(() => {
-      // Verificar si hay token y si es admin (simulado, el backend lo validará)
-      if (!token) {
-         navigate('/login');
+      // Verificar si hay token y si es admin
+      const storedUser = localStorage.getItem('user');
+      let parsedUser = null;
+      try {
+         parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      } catch {
+         parsedUser = null;
+      }
+
+      if (!token || !parsedUser || parsedUser.rol !== 'admin') {
+         clearSession();
          return;
       }
+
+      // Validar que el token siga siendo válido en el servidor
+      validateToken();
       fetchProductos();
+      fetchClientes();
    }, [token, navigate]);
+
+   // Función para validar el token con el servidor
+   const validateToken = async () => {
+      try {
+         const response = await fetch('/auth/validate', {
+            headers: { 'auth-token': token }
+         });
+
+         if (response.status === 401 || response.status === 403) {
+            // Token inválido, expirado o no autorizado
+            clearSession();
+            return false;
+         }
+
+         return response.ok;
+      } catch (err) {
+         console.error('Error validating token:', err);
+         return false;
+      }
+   };
 
    const fetchProductos = async () => {
       try {
          const response = await fetch('/api/productos');
+         
+         if (!response.ok) {
+            console.error('Error fetching productos:', response.status);
+            setProductos([]);
+            setLoading(false);
+            return;
+         }
+         
          const data = await response.json();
-         setProductos(data);
+         setProductos(Array.isArray(data) ? data : []);
       } catch (err) {
-         setError('Error al cargar datos');
+         console.error('Error en fetchProductos:', err);
+         setError('Error al cargar productos');
+         setProductos([]);
       } finally {
          setLoading(false);
+      }
+   };
+
+   const fetchClientes = async () => {
+      try {
+         const response = await fetch('/api/clientes', {
+            headers: { 'auth-token': token }
+         });
+         
+         if (handleAuthError(response)) return;
+         
+         if (!response.ok) {
+            console.error('Error fetching clientes:', response.status);
+            setClientes([]);
+            return;
+         }
+         
+         const data = await response.json();
+         setClientes(Array.isArray(data) ? data : []);
+      } catch (err) {
+         console.error('Error en fetchClientes:', err);
+         setClientes([]);
       }
    };
 
@@ -62,6 +161,8 @@ const Admin = () => {
             },
             body: JSON.stringify(form)
          });
+
+         if (handleAuthError(response)) return;
 
          if (response.ok) {
             alert(form.id ? 'Producto actualizado' : 'Producto creado');
@@ -93,6 +194,8 @@ const Admin = () => {
             method: 'DELETE',
             headers: { 'auth-token': token }
          });
+
+         if (handleAuthError(response)) return;
 
          if (response.ok) {
             fetchProductos();
@@ -148,6 +251,104 @@ const Admin = () => {
           alert('Error de conexión al subir imágenes');
       } finally {
           setUploading(false);
+      }
+   };
+
+   const handleClientChange = (e) => {
+      setClientForm({ ...clientForm, [e.target.name]: e.target.value });
+   };
+
+   const handleClientSubmit = async (e) => {
+      e.preventDefault();
+      try {
+         const response = await fetch('/api/clientes', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+               'auth-token': token
+            },
+            body: JSON.stringify(clientForm)
+         });
+
+         if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'No se pudo crear el cliente');
+         }
+
+         const newClient = await response.json();
+         setClientes([...clientes, newClient]);
+         setClientForm({ nombre: '', telefono: '', email: '', direccion: '' });
+         alert('Cliente registrado correctamente');
+      } catch (err) {
+         alert(err.message);
+      }
+   };
+
+   const handleReserveChange = (e) => {
+      setReserveForm({ ...reserveForm, [e.target.name]: e.target.value });
+   };
+
+   const handleReserveItemChange = (index, field, value) => {
+      const newItems = [...reserveForm.items];
+      newItems[index][field] = value;
+      setReserveForm({ ...reserveForm, items: newItems });
+   };
+
+   const addReserveItem = () => {
+      setReserveForm({
+         ...reserveForm,
+         items: [...reserveForm.items, { productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
+      });
+   };
+
+   const removeReserveItem = (index) => {
+      if (reserveForm.items.length === 1) return;
+      const newItems = reserveForm.items.filter((_, i) => i !== index);
+      setReserveForm({ ...reserveForm, items: newItems });
+   };
+
+   const handleReserveSubmit = async (e) => {
+      e.preventDefault();
+      try {
+         const body = {
+            ...reserveForm,
+            clienteId: Number(reserveForm.clienteId),
+            total: Number(reserveForm.total),
+            items: reserveForm.items.map((item) => ({
+               ...item,
+               productoId: Number(item.productoId),
+               cantidad: Number(item.cantidad),
+               precioUnitario: Number(item.precioUnitario)
+            }))
+         };
+
+         const response = await fetch('/api/reservas', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+               'auth-token': token
+            },
+            body: JSON.stringify(body)
+         });
+
+         if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'No se pudo crear la reserva');
+         }
+
+         setReserveForm({
+            clienteId: '',
+            fechaEvento: '',
+            fechaEntrega: '',
+            fechaDevolucion: '',
+            estado: 'pendiente_medidas',
+            total: '',
+            tipo: 'renta',
+            items: [{ productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
+         });
+         alert('Reserva registrada correctamente');
+      } catch (err) {
+         alert(err.message);
       }
    };
 
@@ -220,25 +421,31 @@ const Admin = () => {
                      <input name="color" value={form.color} onChange={handleChange} required />
                   </div>
                   {form.vestido && (
-					  <>
-						 <div className="input-group">
-						    <label>Talla</label>
-						    <input name="talla" value={form.talla} onChange={handleChange} required />
-						 </div>
-						 <div className="input-group">
-						    <label>Silueta</label>
-					  		<select	className="filtro-select" name="silueta" value={form.silueta} onChange={handleChange} required> 
-					  			<option value="">Selecciona una silueta</option>
-					  			<option value="a">Corte A</option>
-					  			<option value="sirena">Corte Sirena</option>
-					  			<option value="recto">Corte Recto</option>
-						    </select>
-						 </div>
-						 <div className="input-group">
-							<label>Mangas</label>
-							<input name="Mangas" value={form.silueta} onChange={handleChange} required />
-						 </div>
-					  </>
+                     <>
+                        <div className="input-group">
+                           <label>Talla</label>
+                           <input name="talla" value={form.talla} onChange={handleChange} required />
+                        </div>
+                        <div className="input-group">
+                           <label>Silueta</label>
+                           <select	className="filtro-select" name="silueta" value={form.silueta} onChange={handleChange} required> 
+                              <option value="">Selecciona una silueta</option>
+                              <option value="a">Corte A</option>
+                              <option value="sirena">Corte Sirena</option>
+                              <option value="recto">Corte Recto</option>
+                           </select>
+                        </div>
+                        <div className="input-group">
+                           <label>Mangas</label>
+                           <select	className="filtro-select" name="mangas" value={form.mangas} onChange={handleChange} required> 
+                              <option value="">Selecciona una opción</option>
+                              <option value="mangas">Mangas</option>
+                              <option value="mangas caidas">Mangas Caidas</option>
+                              <option value="strapless">Strapless</option>
+                              <option value="tirante">tirante</option>
+                           </select>
+                        </div>
+                     </>
                   )}
                </div>
                
@@ -286,6 +493,148 @@ const Admin = () => {
                <div className="form-actions">
                   <button type="submit" className="save-btn">{form.id ? 'Guardar Cambios' : 'Publicar Producto'}</button>
                   {form.id && <button type="button" onClick={() => setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true })} className="cancel-btn">Cancelar</button>}
+               </div>
+            </form>
+         </section>
+
+         <section className="form-section">
+            <h2>Registrar nuevo cliente</h2>
+            <form onSubmit={handleClientSubmit} className="admin-form">
+               <div className="form-grid">
+                  <div className="input-group">
+                     <label>Nombre</label>
+                     <input name="nombre" value={clientForm.nombre} onChange={handleClientChange} required />
+                  </div>
+                  <div className="input-group">
+                     <label>Teléfono</label>
+                     <input name="telefono" value={clientForm.telefono} onChange={handleClientChange} />
+                  </div>
+                  <div className="input-group">
+                     <label>Email</label>
+                     <input type="email" name="email" value={clientForm.email} onChange={handleClientChange} required />
+                  </div>
+                  <div className="input-group">
+                     <label>Dirección</label>
+                     <input name="direccion" value={clientForm.direccion} onChange={handleClientChange} />
+                  </div>
+               </div>
+               <div className="form-actions">
+                  <button type="submit" className="save-btn">Registrar Cliente</button>
+               </div>
+            </form>
+         </section>
+
+         <section className="form-section">
+            <h2>Registrar renta / compra</h2>
+            <form onSubmit={handleReserveSubmit} className="admin-form">
+               <div className="form-grid">
+                  <div className="input-group">
+                     <label>Cliente</label>
+                     <select name="clienteId" value={reserveForm.clienteId} onChange={handleReserveChange} required>
+                        <option value="">Selecciona un cliente</option>
+                        {clientes.map((cliente) => (
+                           <option key={cliente.id} value={cliente.id}>{cliente.nombre}</option>
+                        ))}
+                     </select>
+                  </div>
+                  <div className="input-group">
+                     <label>Fecha del evento</label>
+                     <input type="date" name="fechaEvento" value={reserveForm.fechaEvento} onChange={handleReserveChange} required />
+                  </div>
+                  <div className="input-group">
+                     <label>Fecha de entrega</label>
+                     <input type="date" name="fechaEntrega" value={reserveForm.fechaEntrega} onChange={handleReserveChange} />
+                  </div>
+                  <div className="input-group">
+                     <label>Fecha de devolución</label>
+                     <input type="date" name="fechaDevolucion" value={reserveForm.fechaDevolucion} onChange={handleReserveChange} />
+                  </div>
+                  <div className="input-group">
+                     <label>Tipo</label>
+                     <select name="tipo" value={reserveForm.tipo} onChange={handleReserveChange}>
+                        <option value="renta">Renta</option>
+                        <option value="venta">Venta</option>
+                     </select>
+                  </div>
+                  <div className="input-group">
+                     <label>Estado</label>
+                     <select name="estado" value={reserveForm.estado} onChange={handleReserveChange}>
+                        <option value="pendiente_medidas">Pendiente medidas</option>
+                        <option value="ajustes">Ajustes</option>
+                        <option value="plancha">Plancha</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="devuelto">Devuelto</option>
+                        <option value="lavado">Lavado</option>
+                        <option value="pagado">Pagado</option>
+                     </select>
+                  </div>
+                  <div className="input-group">
+                     <label>Total</label>
+                     <input type="number" name="total" value={reserveForm.total} onChange={handleReserveChange} required />
+                  </div>
+               </div>
+
+               <div className="input-group full-width" style={{ marginTop: '20px' }}>
+                  <label>Productos de la reserva</label>
+                  {reserveForm.items.map((item, index) => (
+                     <div key={index} style={{ border: '1px solid #eee', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                           <div style={{ flex: '1 1 200px' }}>
+                              <label>Producto</label>
+                              <select value={item.productoId} onChange={(e) => handleReserveItemChange(index, 'productoId', e.target.value)} required>
+                                 <option value="">Selecciona un producto</option>
+                                 {productos.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                 ))}
+                              </select>
+                           </div>
+                           <div style={{ flex: '1 1 120px' }}>
+                              <label>Cantidad</label>
+                              <input type="number" min="1" value={item.cantidad} onChange={(e) => handleReserveItemChange(index, 'cantidad', e.target.value)} required />
+                           </div>
+                           <div style={{ flex: '1 1 160px' }}>
+                              <label>Rol</label>
+                              <select value={item.rol} onChange={(e) => handleReserveItemChange(index, 'rol', e.target.value)}>
+                                 <option value="vestido">Vestido</option>
+                                 <option value="zapatos">Zapatos</option>
+                                 <option value="aretes">Aretes</option>
+                                 <option value="accesorio">Accesorio</option>
+                              </select>
+                           </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px' }}>
+                           <div style={{ flex: '1 1 160px' }}>
+                              <label>Estado Ítem</label>
+                              <select value={item.estadoItem} onChange={(e) => handleReserveItemChange(index, 'estadoItem', e.target.value)}>
+                                 <option value="pendiente">Pendiente</option>
+                                 <option value="medidas">Medidas</option>
+                                 <option value="ajustes">Ajustes</option>
+                                 <option value="plancha">Plancha</option>
+                                 <option value="entregado">Entregado</option>
+                                 <option value="devuelto">Devuelto</option>
+                                 <option value="lavado">Lavado</option>
+                                 <option value="pagado">Pagado</option>
+                              </select>
+                           </div>
+                           <div style={{ flex: '1 1 160px' }}>
+                              <label>Precio unitario</label>
+                              <input type="number" min="0" value={item.precioUnitario} onChange={(e) => handleReserveItemChange(index, 'precioUnitario', e.target.value)} required />
+                           </div>
+                           <div style={{ flex: '1 1 200px' }}>
+                              <label>Notas</label>
+                              <input value={item.notas} onChange={(e) => handleReserveItemChange(index, 'notas', e.target.value)} placeholder="Opcional" />
+                           </div>
+                        </div>
+                        {reserveForm.items.length > 1 && (
+                           <button type="button" onClick={() => removeReserveItem(index)} className="delete-btn" style={{ marginTop: '12px' }}>Eliminar producto</button>
+                        )}
+                     </div>
+                  ))}
+                  <button type="button" onClick={addReserveItem} className="save-btn" style={{ marginTop: '10px' }}>Agregar otro producto</button>
+               </div>
+
+               <div className="form-actions">
+                  <button type="submit" className="save-btn">Registrar renta / compra</button>
                </div>
             </form>
          </section>

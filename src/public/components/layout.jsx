@@ -1,16 +1,24 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { FaTiktok, FaInstagram, FaFacebook } from 'react-icons/fa'
 import { useState, useEffect } from "react";
 
 export default function Layout() {
+   const location = useLocation();
    const [open, setOpen] = useState(false);
    const [isLoggedIn, setIsLoggedIn] = useState(false);
+   const [isAdmin, setIsAdmin] = useState(false);
 
    useEffect(() => {
-      // Verificar conexión cada vez que el componente se monta
       const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
       setIsLoggedIn(!!token);
-   });
+      try {
+         const parsed = user ? JSON.parse(user) : null;
+         setIsAdmin(parsed?.rol === 'admin');
+      } catch {
+         setIsAdmin(false);
+      }
+   }, [location]);
 
    return (
       <>
@@ -29,8 +37,11 @@ export default function Layout() {
                <Link to="/" onClick={() => setOpen(false)}>Quiénes Somos</Link>
                <Link to="/vestidos" onClick={() => setOpen(false)}>Vestidos</Link>
                <Link to="/accesorios" onClick={() => setOpen(false)}>Accesorios</Link>
-               {isLoggedIn ? (
-                  <Link to="/admin" onClick={() => setOpen(false)} style={{ color: '#db2777', fontWeight: 'bold' }}>Admin</Link>
+               {isAdmin ? (
+                  <>
+                     <Link to="/rentas" onClick={() => setOpen(false)}>Rentas</Link>
+                     <Link to="/admin" onClick={() => setOpen(false)} style={{ color: '#db2777', fontWeight: 'bold' }}>Admin</Link>
+                  </>
                ) : (
                   <Link to="/login" onClick={() => setOpen(false)}>Login</Link>
                )}
