@@ -1,35 +1,14 @@
-x Reajustar el fomrulario de subida a uno de productos
-   Poder subr varias fotos a la vez
-
-x Poner un Buscador en la seccion de Vestidos y Accesorios
-
-x Modificar la gestion de inventario a las nuevos requerimientos
-x Poner 4 fotos en pagina y en celular aun esta por revisar
-- Poner calendario de estatus del vestido, que pueda ver las fotos de las entregas
-- buscador de colores con colores de una paleta
-- agregar cantidad al formulario post y put
-x caracteristicas de mangas
-   mangas
-   manga caida
-   strapless
-   tirante
-x caracteristica de silueta
-   corte A
-   Corte sirena
-   Corte Recto
-x Poner una Página abierta para poder mostrar mas contenido del vestido o producto
-- flecha para regresar hasta arriba 
-x relacion 5:7 para todo Vestidos y accesorios
-x ajustar el formulario para que suba tambien mangas y cortes
-
-Acatualizaciónes futuras
-- gestionar las rentas que hace la tienda
-   tener una seccion donde Abi puede ver cuales vestidos se rentan en un calendario y el proceso en el que esta(haciendo ajustes, planchado)
-- llevar un resumen general de ventas que pueda exportarse en excel en todo momento
-- gestion de usuarios para poder renta y comprar en linea, también para reservar citas 
-- Recomendación de tipos y color de vestidos que faltan en la tienda, mostrar una grafica de pastel de lo que mas hay 
+Tareas
+- Mejorar que en el formulario de renta/compra tambien se puedan incluir que no sean vestidos
+- definir mejor el estado de un item y el estado de renta tambien
+- definir filtro del calendario
+- en la tabla de rentas poder modificar los estados de los vestidosi
 
 
-Actualizaciones con condicion
-- cuando los productos suban a 1000-2000 es mejor hacer que el filtrado en las busquedas 
-  lo  haga directamente la base de datos en lugar de traer todo y filtrar en el frontend.
+Estados de un vestido
+1. Venir a ajustes
+2. Entregar el vestido
+3. En evento 
+4. Devolución del vestido
+5. Lavado
+6. Disponible en stock
