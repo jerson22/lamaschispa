@@ -160,7 +160,7 @@ app.get('/api/productos/:id', async (req, res) => {
          WHERE p.id = $1
       `;
       const result = await db.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
          return res.status(404).json({ error: "Producto no encontrado" });
       }
@@ -183,11 +183,11 @@ app.get('/api/clientes', verificarToken, esAdmin, async (req, res) => {
 });
 
 app.post('/api/clientes', verificarToken, esAdmin, async (req, res) => {
-   const { nombre, telefono, email, direccion } = req.body;
+   const { nombre, telefono, email, municipio } = req.body;
    try {
       const result = await db.query(
-         'INSERT INTO clientes (nombre, telefono, email, direccion) VALUES ($1, $2, $3, $4) RETURNING *',
-         [nombre, telefono, email, direccion]
+         'INSERT INTO clientes (nombre, telefono, email, municipio) VALUES ($1, $2, $3, $4) RETURNING *',
+         [nombre, telefono, email, municipio]
       );
       res.status(201).json(result.rows[0]);
    } catch (error) {
@@ -196,33 +196,25 @@ app.post('/api/clientes', verificarToken, esAdmin, async (req, res) => {
    }
 });
 
-app.post('/api/reservas', verificarToken, esAdmin, async (req, res) => {
-   const { clienteId, fechaEvento, fechaEntrega, fechaDevolucion, estado, total, tipo, items } = req.body;
-   if (!clienteId || !fechaEvento || !items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Datos incompletos para crear la reserva' });
+app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
+   console.log("Datos recibidos para venta:", req.body);
+   const { clientId, name, prodcutId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipo, pendiente, notas } = req.body;
+   if (!name || !fechaRenta || !fechaEntrega || !fechaDevolucion || anticipo === undefined) {
+      return res.status(400).json({ error: 'Datos incompletos para crear la venta' });
    }
-
    try {
-      await db.query('BEGIN');
-      const reservaResult = await db.query(
-         'INSERT INTO reserva (clienteid, fechaevento, fechaentrega, fechadevolucion, estado, total, tipo) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-         [clienteId, fechaEvento, fechaEntrega || null, fechaDevolucion || null, estado, total, tipo]
+      const isTrue = (val) => val === true || val === 1 || val === '1';
+      const estado = isTrue(ajuste) ? 'cita de ajustes' : 'planchado';
+      const ventasResult = await db.query(
+         'INSERT INTO ventas ("clientId", "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipo", "pendiente", "notas") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
+         [clientId || null, name, prodcutId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipo, pendiente, notas]
       );
-      const reservaId = reservaResult.rows[0].id;
+      const reservaId = ventasResult.rows[0].id;
 
-      for (const item of items) {
-         await db.query(
-            'INSERT INTO reservaitem (reservaid, productoid, cantidad, rol, estadoitem, preciounitario, notas) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [reservaId, item.productoId, item.cantidad || 1, item.rol, item.estadoItem, item.precioUnitario || 0, item.notas || '']
-         );
-      }
-
-      await db.query('COMMIT');
-      res.status(201).json({ mensaje: 'Reserva creada', reservaId });
+      res.status(201).json({ mensaje: 'Venta creada', reservaId });
    } catch (error) {
-      await db.query('ROLLBACK');
       console.error(error);
-      res.status(500).json({ error: 'Error al crear la reserva' });
+      res.status(500).json({ error: 'Error al crear la venta' });
    }
 });
 

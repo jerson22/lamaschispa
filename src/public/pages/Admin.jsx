@@ -21,19 +21,22 @@ const Admin = () => {
       nombre: '',
       telefono: '',
       email: '',
-      direccion: ''
+      municipio: ''
    });
-   const [reserveForm, setReserveForm] = useState({
-      clienteId: '',
-      fechaEvento: '',
+   const [ventasForm, setventasForm] = useState({
+      clientId: '',
+      name: '',
+      prodcutId: '',
+      bolso: false,
+      aretes: false,
+      ajuste: false,
+      fechaAjustes: '',
+      fechaRenta: '',
       fechaEntrega: '',
       fechaDevolucion: '',
-      estado: 'pendiente_medidas',
-      total: '',
-      tipo: 'renta',
-      items: [
-         { productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }
-      ]
+      anticipo: '',
+      pendiente: '',
+      notas: '',
    });
    const [loading, setLoading] = useState(true);
    const [uploading, setUploading] = useState(false);
@@ -102,14 +105,14 @@ const Admin = () => {
    const fetchProductos = async () => {
       try {
          const response = await fetch('/api/productos');
-         
+
          if (!response.ok) {
             console.error('Error fetching productos:', response.status);
             setProductos([]);
             setLoading(false);
             return;
          }
-         
+
          const data = await response.json();
          setProductos(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -126,15 +129,15 @@ const Admin = () => {
          const response = await fetch('/api/clientes', {
             headers: { 'auth-token': token }
          });
-         
+
          if (handleAuthError(response)) return;
-         
+
          if (!response.ok) {
             console.error('Error fetching clientes:', response.status);
             setClientes([]);
             return;
          }
-         
+
          const data = await response.json();
          setClientes(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -166,7 +169,7 @@ const Admin = () => {
 
          if (response.ok) {
             alert(form.id ? 'Producto actualizado' : 'Producto creado');
-            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', silueta:'', mangas:'', imagenes: [''], descripcion: '', vestido: true });
+            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', silueta: '', mangas: '', imagenes: [''], descripcion: '', vestido: true });
             fetchProductos();
          } else {
             const data = await response.json();
@@ -227,30 +230,30 @@ const Admin = () => {
    const handleFileUpload = async (e) => {
       const files = e.target.files;
       if (!files || files.length === 0) return;
-      
+
       setUploading(true);
       const formData = new FormData();
       for (let i = 0; i < files.length; i++) {
-          formData.append('images', files[i]);
+         formData.append('images', files[i]);
       }
 
       try {
-          const response = await fetch('/api/upload', {
-              method: 'POST',
-              headers: { 'auth-token': token },
-              body: formData
-          });
-          const data = await response.json();
-          if (response.ok) {
-              const filteredImagenes = form.imagenes.filter(img => img.trim() !== '');
-              setForm({ ...form, imagenes: [...filteredImagenes, ...data.filenames] });
-          } else {
-              alert(data.error || 'Error al subir imágenes');
-          }
+         const response = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'auth-token': token },
+            body: formData
+         });
+         const data = await response.json();
+         if (response.ok) {
+            const filteredImagenes = form.imagenes.filter(img => img.trim() !== '');
+            setForm({ ...form, imagenes: [...filteredImagenes, ...data.filenames] });
+         } else {
+            alert(data.error || 'Error al subir imágenes');
+         }
       } catch (err) {
-          alert('Error de conexión al subir imágenes');
+         alert('Error de conexión al subir imágenes');
       } finally {
-          setUploading(false);
+         setUploading(false);
       }
    };
 
@@ -277,7 +280,7 @@ const Admin = () => {
 
          const newClient = await response.json();
          setClientes([...clientes, newClient]);
-         setClientForm({ nombre: '', telefono: '', email: '', direccion: '' });
+         setClientForm({ nombre: '', telefono: '', email: '', municipio: '' });
          alert('Cliente registrado correctamente');
       } catch (err) {
          alert(err.message);
@@ -285,44 +288,52 @@ const Admin = () => {
    };
 
    const handleReserveChange = (e) => {
-      setReserveForm({ ...reserveForm, [e.target.name]: e.target.value });
+      const { name, value, type, checked } = e.target;
+      setventasForm({
+         ...ventasForm,
+         [name]: type === 'checkbox' ? checked : value
+      });
    };
 
    const handleReserveItemChange = (index, field, value) => {
-      const newItems = [...reserveForm.items];
+      const newItems = [...ventasForm.items];
       newItems[index][field] = value;
-      setReserveForm({ ...reserveForm, items: newItems });
+      setventasForm({ ...ventasForm, items: newItems });
    };
 
    const addReserveItem = () => {
-      setReserveForm({
-         ...reserveForm,
-         items: [...reserveForm.items, { productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
+      setventasForm({
+         ...ventasForm,
+         items: [...ventasForm.items, { prodcutId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
       });
    };
 
    const removeReserveItem = (index) => {
-      if (reserveForm.items.length === 1) return;
-      const newItems = reserveForm.items.filter((_, i) => i !== index);
-      setReserveForm({ ...reserveForm, items: newItems });
+      if (ventasForm.items.length === 1) return;
+      const newItems = ventasForm.items.filter((_, i) => i !== index);
+      setventasForm({ ...ventasForm, items: newItems });
    };
 
    const handleReserveSubmit = async (e) => {
       e.preventDefault();
       try {
          const body = {
-            ...reserveForm,
-            clienteId: Number(reserveForm.clienteId),
-            total: Number(reserveForm.total),
-            items: reserveForm.items.map((item) => ({
-               ...item,
-               productoId: Number(item.productoId),
-               cantidad: Number(item.cantidad),
-               precioUnitario: Number(item.precioUnitario)
-            }))
+            clientId: Number(ventasForm.clientId),
+            name: ventasForm.name,
+            prodcutId: Number(ventasForm.prodcutId),
+            bolso: ventasForm.bolso ? 1 : 0,
+            aretes: ventasForm.aretes ? 1 : 0,
+            ajuste: ventasForm.ajuste ? 1 : 0,
+            fechaAjustes: ventasForm.fechaAjustes || null,
+            fechaRenta: ventasForm.fechaRenta,
+            fechaEntrega: ventasForm.fechaEntrega,
+            fechaDevolucion: ventasForm.fechaDevolucion,
+            anticipo: Number(ventasForm.anticipo),
+            pendiente: Number(ventasForm.pendiente),
+            notas: ventasForm.notas
          };
 
-         const response = await fetch('/api/reservas', {
+         const response = await fetch('/api/ventas', {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
@@ -332,21 +343,34 @@ const Admin = () => {
          });
 
          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'No se pudo crear la reserva');
+            const text = await response.text();
+            let errorMessage = 'Error del servidor al crear la venta';
+            try {
+               const data = JSON.parse(text);
+               errorMessage = data.error || errorMessage;
+            } catch (parseErr) {
+               console.error('Error response:', text);
+            }
+            throw new Error(errorMessage);
          }
 
-         setReserveForm({
-            clienteId: '',
-            fechaEvento: '',
+         alert('Venta registrada correctamente');
+         setventasForm({
+            clientId: '',
+            name: '',
+            prodcutId: '',
+            bolso: false,
+            aretes: false,
+            ajuste: false,
+            fechaAjustes: '',
+            fechaRenta: '',
             fechaEntrega: '',
             fechaDevolucion: '',
-            estado: 'pendiente_medidas',
-            total: '',
-            tipo: 'renta',
-            items: [{ productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
+            anticipo: '',
+            pendiente: '',
+            notas: '',
          });
-         alert('Reserva registrada correctamente');
+         alert('venta registrada correctamente');
       } catch (err) {
          alert(err.message);
       }
@@ -384,20 +408,20 @@ const Admin = () => {
                   <label>Tipo de Producto</label>
                   <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
                      <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'normal', cursor: 'pointer' }}>
-                        <input 
-                           type="radio" 
-                           name="vestido" 
-                           checked={form.vestido === true} 
-                           onChange={() => setForm({ ...form, vestido: true })} 
+                        <input
+                           type="radio"
+                           name="vestido"
+                           checked={form.vestido === true}
+                           onChange={() => setForm({ ...form, vestido: true })}
                         />
                         Vestido
                      </label>
                      <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'normal', cursor: 'pointer' }}>
-                        <input 
-                           type="radio" 
-                           name="vestido" 
-                           checked={form.vestido === false} 
-                           onChange={() => setForm({ ...form, vestido: false })} 
+                        <input
+                           type="radio"
+                           name="vestido"
+                           checked={form.vestido === false}
+                           onChange={() => setForm({ ...form, vestido: false })}
                         />
                         Accesorio
                      </label>
@@ -428,7 +452,7 @@ const Admin = () => {
                         </div>
                         <div className="input-group">
                            <label>Silueta</label>
-                           <select	className="filtro-select" name="silueta" value={form.silueta} onChange={handleChange} required> 
+                           <select className="filtro-select" name="silueta" value={form.silueta} onChange={handleChange} required>
                               <option value="">Selecciona una silueta</option>
                               <option value="a">Corte A</option>
                               <option value="sirena">Corte Sirena</option>
@@ -437,7 +461,7 @@ const Admin = () => {
                         </div>
                         <div className="input-group">
                            <label>Mangas</label>
-                           <select	className="filtro-select" name="mangas" value={form.mangas} onChange={handleChange} required> 
+                           <select className="filtro-select" name="mangas" value={form.mangas} onChange={handleChange} required>
                               <option value="">Selecciona una opción</option>
                               <option value="mangas">Mangas</option>
                               <option value="mangas caidas">Mangas Caidas</option>
@@ -448,17 +472,17 @@ const Admin = () => {
                      </>
                   )}
                </div>
-               
+
                <div className="input-group full-width" style={{ marginTop: '20px' }}>
                   <label>Fotos (en orden de aparición)</label>
-                  
+
                   <div style={{ border: '2px dashed #db2777', padding: '20px', borderRadius: '10px', textAlign: 'center', backgroundColor: '#fdf2f8', position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.3s' }}>
-                     <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*" 
-                        onChange={handleFileUpload} 
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
+                     <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
                         disabled={uploading}
                      />
                      <p style={{ margin: 0, color: '#db2777', fontWeight: 'bold' }}>
@@ -470,10 +494,10 @@ const Admin = () => {
                      {form.imagenes.map((img, index) => (
                         <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                            <span style={{ padding: '8px 12px', background: '#fdf2f8', color: '#db2777', borderRadius: '5px', fontWeight: 'bold' }}>{index + 1}</span>
-                           <input 
-                              value={img} 
-                              onChange={(e) => handleImageChange(index, e.target.value)} 
-                              placeholder={`Ej. foto_${index + 1}.jpg`} 
+                           <input
+                              value={img}
+                              onChange={(e) => handleImageChange(index, e.target.value)}
+                              placeholder={`Ej. foto_${index + 1}.jpg`}
                               style={{ flex: 1 }}
                               required={index === 0}
                            />
@@ -514,8 +538,8 @@ const Admin = () => {
                      <input type="email" name="email" value={clientForm.email} onChange={handleClientChange} required />
                   </div>
                   <div className="input-group">
-                     <label>Dirección</label>
-                     <input name="direccion" value={clientForm.direccion} onChange={handleClientChange} />
+                     <label>Municipio</label>
+                     <input name="municipio" value={clientForm.municipio} onChange={handleClientChange} />
                   </div>
                </div>
                <div className="form-actions">
@@ -524,113 +548,75 @@ const Admin = () => {
             </form>
          </section>
 
-         <section className="form-section">
-            <h2>Registrar renta / compra</h2>
+         <section className="form-section container">
+            <h2>Registrar Renta / Compra</h2>
             <form onSubmit={handleReserveSubmit} className="admin-form">
-               <div className="form-grid">
-                  <div className="input-group">
-                     <label>Cliente</label>
-                     <select name="clienteId" value={reserveForm.clienteId} onChange={handleReserveChange} required>
-                        <option value="">Selecciona un cliente</option>
-                        {clientes.map((cliente) => (
-                           <option key={cliente.id} value={cliente.id}>{cliente.nombre}</option>
-                        ))}
-                     </select>
+               {/* FILA 1: Columnas 70% y 30% */}
+               <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                  {/* columna izquierda */}
+                  <div style={{ flex: '0 0 calc(60% - 10px)' }}>
+                     <div className="input-group">
+                        <label>Núm. 10</label>
+                     </div>
+                     <div className="input-group">
+                        <label>Nombre</label>
+                        <input type="text" name="name" value={ventasForm.name} onChange={handleReserveChange} required />
+                     </div>
+                     <div className="input-group">
+                        <label>Producto</label>
+                        <input type="text" name="producto" value={ventasForm.producto} onChange={handleReserveChange} />
+                     </div>
+                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
+                           <input type="checkbox" name="bolso" checked={ventasForm.bolso} onChange={handleReserveChange} />
+                           Bolso
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
+                           <input type="checkbox" name="aretes" checked={ventasForm.aretes} onChange={handleReserveChange} />
+                           Aretes
+                        </label>
+                     </div>
+                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
+                           <input type="checkbox" name="ajuste" checked={ventasForm.ajuste} onChange={handleReserveChange} />
+                           Ajustes
+                        </label>
+                        <input type="date" name="fechaAjustes" value={ventasForm.fechaAjustes} onChange={handleReserveChange} style={{ flex: 1 }} />
+                     </div>
                   </div>
-                  <div className="input-group">
-                     <label>Fecha del evento</label>
-                     <input type="date" name="fechaEvento" value={reserveForm.fechaEvento} onChange={handleReserveChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>Fecha de entrega</label>
-                     <input type="date" name="fechaEntrega" value={reserveForm.fechaEntrega} onChange={handleReserveChange} />
-                  </div>
-                  <div className="input-group">
-                     <label>Fecha de devolución</label>
-                     <input type="date" name="fechaDevolucion" value={reserveForm.fechaDevolucion} onChange={handleReserveChange} />
-                  </div>
-                  <div className="input-group">
-                     <label>Tipo</label>
-                     <select name="tipo" value={reserveForm.tipo} onChange={handleReserveChange}>
-                        <option value="renta">Renta</option>
-                        <option value="venta">Venta</option>
-                     </select>
-                  </div>
-                  <div className="input-group">
-                     <label>Estado</label>
-                     <select name="estado" value={reserveForm.estado} onChange={handleReserveChange}>
-                        <option value="pendiente_medidas">Pendiente medidas</option>
-                        <option value="ajustes">Ajustes</option>
-                        <option value="plancha">Plancha</option>
-                        <option value="entregado">Entregado</option>
-                        <option value="devuelto">Devuelto</option>
-                        <option value="lavado">Lavado</option>
-                        <option value="pagado">Pagado</option>
-                     </select>
-                  </div>
-                  <div className="input-group">
-                     <label>Total</label>
-                     <input type="number" name="total" value={reserveForm.total} onChange={handleReserveChange} required />
+                  {/* columna derecha */}
+                  <div style={{ flex: '0 0 calc(40% - 10px)' }}>
+                     <div className="input-group">
+                        <label>Fecha de Renta</label>
+                        <input type="date" name="fechaRenta" value={ventasForm.fechaRenta} onChange={handleReserveChange} />
+                     </div>
+                     <div className="input-group">
+                        <label>Fecha de Entrega</label>
+                        <input type="date" name="fechaEntrega" value={ventasForm.fechaEntrega} onChange={handleReserveChange} />
+                     </div>
+                     <div className="input-group">
+                        <label>Fecha de Devolucion</label>
+                        <input type="date" name="fechaDevolucion" value={ventasForm.fechaDevolucion} onChange={handleReserveChange} />
+                     </div>
                   </div>
                </div>
 
-               <div className="input-group full-width" style={{ marginTop: '20px' }}>
-                  <label>Productos de la reserva</label>
-                  {reserveForm.items.map((item, index) => (
-                     <div key={index} style={{ border: '1px solid #eee', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                           <div style={{ flex: '1 1 200px' }}>
-                              <label>Producto</label>
-                              <select value={item.productoId} onChange={(e) => handleReserveItemChange(index, 'productoId', e.target.value)} required>
-                                 <option value="">Selecciona un producto</option>
-                                 {productos.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                 ))}
-                              </select>
-                           </div>
-                           <div style={{ flex: '1 1 120px' }}>
-                              <label>Cantidad</label>
-                              <input type="number" min="1" value={item.cantidad} onChange={(e) => handleReserveItemChange(index, 'cantidad', e.target.value)} required />
-                           </div>
-                           <div style={{ flex: '1 1 160px' }}>
-                              <label>Rol</label>
-                              <select value={item.rol} onChange={(e) => handleReserveItemChange(index, 'rol', e.target.value)}>
-                                 <option value="vestido">Vestido</option>
-                                 <option value="zapatos">Zapatos</option>
-                                 <option value="aretes">Aretes</option>
-                                 <option value="accesorio">Accesorio</option>
-                              </select>
-                           </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px' }}>
-                           <div style={{ flex: '1 1 160px' }}>
-                              <label>Estado Ítem</label>
-                              <select value={item.estadoItem} onChange={(e) => handleReserveItemChange(index, 'estadoItem', e.target.value)}>
-                                 <option value="pendiente">Pendiente</option>
-                                 <option value="medidas">Medidas</option>
-                                 <option value="ajustes">Ajustes</option>
-                                 <option value="plancha">Plancha</option>
-                                 <option value="entregado">Entregado</option>
-                                 <option value="devuelto">Devuelto</option>
-                                 <option value="lavado">Lavado</option>
-                                 <option value="pagado">Pagado</option>
-                              </select>
-                           </div>
-                           <div style={{ flex: '1 1 160px' }}>
-                              <label>Precio unitario</label>
-                              <input type="number" min="0" value={item.precioUnitario} onChange={(e) => handleReserveItemChange(index, 'precioUnitario', e.target.value)} required />
-                           </div>
-                           <div style={{ flex: '1 1 200px' }}>
-                              <label>Notas</label>
-                              <input value={item.notas} onChange={(e) => handleReserveItemChange(index, 'notas', e.target.value)} placeholder="Opcional" />
-                           </div>
-                        </div>
-                        {reserveForm.items.length > 1 && (
-                           <button type="button" onClick={() => removeReserveItem(index)} className="delete-btn" style={{ marginTop: '12px' }}>Eliminar producto</button>
-                        )}
-                     </div>
-                  ))}
-                  <button type="button" onClick={addReserveItem} className="save-btn" style={{ marginTop: '10px' }}>Agregar otro producto</button>
+               {/* FILA 2: Notas 100% */}
+               <div style={{ marginBottom: '20px', borderTop: '2px solid #eee', paddingTop: '20px' }}>
+                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '10px', color: '#555' }}>Notas</label>
+                  <textarea name="notas" value={ventasForm.notas} onChange={handleReserveChange} placeholder="Opcional" style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', minHeight: '80px', fontFamily: 'inherit' }} />
+               </div>
+
+               {/* FILA 3: Anticipo y Total 100% */}
+               <div style={{ display: 'flex', gap: '20px', borderTop: '2px solid #eee', paddingTop: '20px' }}>
+                  <div style={{ flex: '1' }}>
+                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Anticipo</label>
+                     <input type="number" name="anticipo" value={ventasForm.anticipo} onChange={handleReserveChange} />
+                  </div>
+                  <div style={{ flex: '1' }}>
+                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Pendiente</label>
+                     <input type="number" name="pendiente" value={ventasForm.pendiente} onChange={handleReserveChange} />
+                  </div>
                </div>
 
                <div className="form-actions">
@@ -642,9 +628,9 @@ const Admin = () => {
          <section className="list-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
                <h2 style={{ margin: 0 }}>Gestión de Inventario</h2>
-               <input 
-                  type="text" 
-                  placeholder="Buscar por ID, nombre, tipo o talla..." 
+               <input
+                  type="text"
+                  placeholder="Buscar por ID, nombre, tipo o talla..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{ padding: '10px 15px', border: '1px solid #ddd', borderRadius: '8px', minWidth: '250px', outline: 'none' }}
@@ -666,19 +652,19 @@ const Admin = () => {
                   <tbody>
                      {productosFiltrados.length > 0 ? (
                         productosFiltrados.map(p => (
-                        <tr key={p.id}>
-                           <td>{p.id}</td>
-                           <td>{p.name}</td>
-                           <td>{(p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'Vestido' : 'Accesorio'}</td>
-                           <td>${p.precio_venta}</td>
-                           <td>${p.precio_renta}</td>
-                           <td>{p.talla || '-'}</td>
-                           <td>
-                              <button onClick={() => handleEdit(p)} className="edit-btn">Editar</button>
-                              <button onClick={() => handleDelete(p.id)} className="delete-btn">Borrar</button>
-                           </td>
-                        </tr>
-                     ))
+                           <tr key={p.id}>
+                              <td>{p.id}</td>
+                              <td>{p.name}</td>
+                              <td>{(p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'Vestido' : 'Accesorio'}</td>
+                              <td>${p.precio_venta}</td>
+                              <td>${p.precio_renta}</td>
+                              <td>{p.talla || '-'}</td>
+                              <td>
+                                 <button onClick={() => handleEdit(p)} className="edit-btn">Editar</button>
+                                 <button onClick={() => handleDelete(p.id)} className="delete-btn">Borrar</button>
+                              </td>
+                           </tr>
+                        ))
                      ) : (
                         <tr>
                            <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No se encontraron productos con esa búsqueda.</td>
@@ -721,6 +707,10 @@ const Admin = () => {
                border-radius: 15px;
                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
                margin-bottom: 40px;
+            }
+            .conteiner{
+               display: flex;
+               width: 100%;
             }
             .form-grid {
                display: grid;
