@@ -196,18 +196,19 @@ app.post('/api/clientes', verificarToken, esAdmin, async (req, res) => {
    }
 });
 
+// insertar ventas
 app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
    console.log("Datos recibidos para venta:", req.body);
-   const { clientId, name, prodcutId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipo, pendiente, notas } = req.body;
-   if (!name || !fechaRenta || !fechaEntrega || !fechaDevolucion || anticipo === undefined) {
+   const { name, productId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, liquidado, notas } = req.body;
+   if (!name || !fechaRenta || !fechaEntrega || !fechaDevolucion || anticipoEfectivo === undefined && anticipoTarjeta === undefined) {
       return res.status(400).json({ error: 'Datos incompletos para crear la venta' });
    }
    try {
       const isTrue = (val) => val === true || val === 1 || val === '1';
       const estado = isTrue(ajuste) ? 'cita de ajustes' : 'planchado';
       const ventasResult = await db.query(
-         'INSERT INTO ventas ("clientId", "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipo", "pendiente", "notas") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-         [clientId || null, name, prodcutId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipo, pendiente, notas]
+         'INSERT INTO ventas ( "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipoEfectivo", "anticipoTarjeta", "pendienteEfectivo", "pendienteTarjeta", "liquidado", "notas") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *',
+         [ name, productId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, isTrue(liquidado) ? '1' : '0', notas]
       );
       const reservaId = ventasResult.rows[0].id;
 
@@ -218,66 +219,83 @@ app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
    }
 });
 
-// Endpoint para obtener todas las reservas con productos y cliente
-app.get('/api/reservas', verificarToken, esAdmin, async (req, res) => {
+// Traer ventas para la tabla rentas
+app.get('/api/rentas', verificarToken, esAdmin, async (req, res) => {
    try {
-      const query = `
-         SELECT
-            r.id,
-            r.fechaevento,
-            r.fechaentrega,
-            r.fechadevolucion,
-            r.estado,
-            r.total,
-            r.tipo,
-            c.nombre AS cliente,
-            json_agg(
-               json_build_object(
-                  'productoId', p.id,
-                  'productoNombre', p.name,
-                  'rol', ri.rol,
-                  'precioUnitario', ri.preciounitario,
-                  'estadoItem', ri.estadoitem
-               ) ORDER BY ri.id
-            ) AS items
-         FROM reserva r
-         JOIN clientes c ON c.id = r.clienteid
-         JOIN reservaitem ri ON ri.reservaid = r.id
-         JOIN productos p ON p.id = ri.productoid
-         GROUP BY r.id, c.nombre
-         ORDER BY r.fechaevento ASC, r.id ASC
-      `;
-      const result = await db.query(query);
+      const result = await db.query('SELECT * FROM ventas ORDER BY "fechaEntrega" ASC');
       res.json(result.rows);
    } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Error al obtener las reservas' });
+      res.status(500).json({ error: 'Error al obtener las rentas' });
    }
 });
 
-// Endpoint para obtener reservas de un producto específico
-app.get('/api/productos/:id/reservas', verificarToken, async (req, res) => {
+// Endpoint para actualizar el estado de una renta
+app.put('/api/rentas/:id', verificarToken, esAdmin, async (req, res) => {
+   const { id } = req.params;       // Captura el ID desde la URL
+   const { estado } = req.body;     // Captura el nuevo estado enviado desde React
+
+   // 1. Validación básica (opcional pero recomendada)
+   const estadosValidos = ['cita de ajustes', 'ajustes', 'planchado', 'entregado', 'devolucion', 'tintoreria', 'en tienda'];
+   if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ error: 'Estado no válido' });
+   }
+
+   try {
+      // 2. Consulta SQL usando marcadores ($1, $2) para evitar inyección SQL
+      // Nota: Aquí usamos tu tabla real llamada 'ventas'
+      const queryText = `
+         UPDATE ventas 
+         SET estado = $1 
+         WHERE id = $2 
+         RETURNING *;
+      `;
+      const values = [estado, id];
+
+      // 3. Ejecutar la consulta en la base de datos
+      const result = await db.query(queryText, values);
+
+      // 4. Si la consulta no afectó a ninguna fila, significa que el ID no existe
+      if (result.rows.length === 0) {
+         return res.status(404).json({ error: 'La venta/renta no existe.' });
+      }
+
+      // 5. Responder al frontend con éxito y pasar el registro modificado
+      res.json({
+         message: 'Estado actualizado con éxito',
+         ventaActualizada: result.rows[0]
+      });
+
+   } catch (error) {
+      console.error('Error al actualizar la base de datos:', error);
+      res.status(500).json({ error: 'Error interno del servidor al actualizar el estado' });
+   }
+});
+
+// Endpoint para eliminar una renta
+app.delete('/api/rentas/:id', verificarToken, esAdmin, async (req, res) => {
    const { id } = req.params;
    try {
-      const query = `
-         SELECT
-            r.id,
-            r.fechaevento,
-            r.fechaentrega,
-            r.fechadevolucion,
-            r.estado,
-            c.nombre AS cliente
-         FROM reservaitem ri
-         JOIN reserva r ON r.id = ri.reservaid
-         JOIN clientes c ON c.id = r.clienteid
-         WHERE ri.productoid = $1
-         ORDER BY r.fechaevento ASC, r.id ASC
-      `;
-      const result = await db.query(query, [id]);
+      const result = await db.query('DELETE FROM ventas WHERE id = $1 RETURNING *', [id]);  
+      res.json({
+         message: 'Renta eliminada con éxito',
+         ventaEliminada: result.rows[0]
+      });
+   } catch (error) {
+      console.error('Error al eliminar la renta:', error);
+      res.status(500).json({ error: 'Error interno del servidor al eliminar la renta' });
+   }
+});
+
+// Endpoint para traer las ventas por ID de producto
+app.get('/api/ventas/:id', verificarToken, esAdmin, async (req, res) => {
+   const { id } = req.params;
+   try {
+      const result = await db.query('SELECT * FROM ventas WHERE "productId" = $1 ORDER BY id ASC', [id]);
       res.json(result.rows);
    } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Error al obtener las reservas del producto' });
+      res.status(500).json({ error: 'Error al obtener las ventas por ID' });
    }
 });
 

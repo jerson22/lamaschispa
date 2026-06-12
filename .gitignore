@@ -1,0 +1,34 @@
+# ==========================================
+# Archivos solicitados para ignorar
+# ==========================================
+
+# Ignorar la carpeta de dependencias de Node
+node_modules/
+
+# Ignorar archivo de variables de entorno (claves secretas)
+.env
+.env.local
+.env.production.local
+
+# Ignorar la carpeta de imágenes (especificando su ruta exacta)
+src/public/images/
+
+
+# ==========================================
+# Sugerencias adicionales recomendadas
+# ==========================================
+
+# 1. La carpeta de producción de Vite
+# Cuando ejecutes 'npm run build', Vite creará esta carpeta con el código listo.
+# No se debe subir a GitHub porque se genera automáticamente en cada despliegue.
+src/public/dist/
+
+# 2. Archivos de notas personales o To-Do locales
+# "Tareas de la página.txt" parece un archivo de control tuyo. 
+# Es mejor ignorarlo para no ensuciar el repositorio de código.
+Tareas de la página.txt
+*.todo
+
+# 3. Archivos basura del sistema operativo
+.DS_Store
+Thumbs.db

@@ -5,11 +5,11 @@ const Producto = () => {
    const { id } = useParams();
    const navigate = useNavigate();
    const [product, setProduct] = useState(null);
-   const [reservas, setReservas] = useState([]);
+   const [ventas, setVentas] = useState([]);
    const [loading, setLoading] = useState(true);
-   const [loadingReservas, setLoadingReservas] = useState(false);
+   const [loadingVentas, setLoadingVentas] = useState(false);
    const [error, setError] = useState(null);
-   const [errorReservas, setErrorReservas] = useState(null);
+   const [errorVentas, setErrorVentas] = useState(null);
    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
    useEffect(() => {
@@ -40,32 +40,34 @@ const Producto = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const fetchReservas = async () => {
-         setLoadingReservas(true);
+      const fetchVentas = async () => {
+         setLoadingVentas(true);
          try {
-            const response = await fetch(`/api/productos/${id}/reservas`, {
+            const response = await fetch(`/api/ventas/${id}`, {
                headers: { 'auth-token': token }
             });
+            console.log('Respuesta de ventas:', response);
             if (!response.ok) {
                throw new Error('No se pudo cargar las fechas de renta');
             }
             const data = await response.json();
+            console.log('Fechas de renta obtenidas:', data);
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
             const proximas = data
-               .map((reserva) => ({ ...reserva, fechaevento: new Date(reserva.fechaevento) }))
-               .filter((reserva) => reserva.fechaevento >= hoy)
-               .sort((a, b) => a.fechaevento - b.fechaevento);
-            setReservas(proximas);
+               .map((ventas) => ({ ...ventas, fechaEntrega: new Date(ventas.fechaEntrega) }))
+               .filter((ventas) => ventas.fechaEntrega >= hoy)
+               .sort((a, b) => a.fechaEntrega - b.fechaEntrega);
+            setVentas(proximas);
          } catch (err) {
             console.error(err);
-            setErrorReservas(err.message || 'Error al obtener las fechas de renta');
+            setErrorVentas(err.message || 'Error al obtener las fechas de renta');
          } finally {
-            setLoadingReservas(false);
+            setLoadingVentas(false);
          }
       };
 
-      fetchReservas();
+      fetchVentas();
    }, [id]);
 
 
@@ -121,19 +123,22 @@ const Producto = () => {
                </div>
 
                <h1 className="producto-detail-title">{product.name}</h1>
+               {localStorage.getItem('token') ? (
 
-               <div className="producto-detail-prices">
-                  <div className="price-box renta">
-                     <span className="price-label">Precio Renta</span>
-                     <span className="price-value">${product.precio_renta}</span>
-                  </div>
-                  {product.precio_venta && (
-                     <div className="price-box venta">
-                        <span className="price-label">Precio Venta</span>
-                        <span className="price-value">${product.precio_venta}</span>
+                  <div className="producto-detail-prices">
+                     <div className="price-box renta">
+                        <span className="price-label">Precio Renta</span>
+                        <span className="price-value">${product.precio_renta}</span>
                      </div>
-                  )}
-               </div>
+                     {product.precio_venta && (
+                        <div className="price-box venta">
+                           <span className="price-label">Precio Venta</span>
+                           <span className="price-value">${product.precio_venta}</span>
+                        </div>
+                     )}
+                  </div>
+                  
+               ) : null}
 
                <div className="producto-detail-description">
                   <h3>Descripción</h3>
@@ -157,18 +162,19 @@ const Producto = () => {
 
                {localStorage.getItem('token') ? (
                   <div className="producto-detail-reservas">
-                     <h3>Fechas de renta próximas</h3>
-                     {loadingReservas ? (
+                     <h3>Fechas de entrega próximas</h3>
+                     {loadingVentas ? (
                         <p>Cargando fechas...</p>
-                     ) : errorReservas ? (
-                        <p className="error">{errorReservas}</p>
-                     ) : reservas.length === 0 ? (
+                     ) : errorVentas ? (
+                        <p className="error">{errorVentas}</p>
+                     ) : ventas.length === 0 ? (
                         <p>Este producto no tiene rentas próximas registradas.</p>
                      ) : (
                         <ul>
-                           {reservas.map((reserva) => (
-                              <li key={reserva.id}>
-                                 <strong>{formatFechaEvento(reserva.fechaevento)}</strong> — {reserva.cliente}
+                           {ventas.map((venta) => (
+                              <li key={venta.id}>
+                                 <strong>{venta.fechaEntrega.toLocaleDateString('es-ES',{weekday: 'long'})} </strong>
+                                 <strong>{formatFechaEvento(venta.fechaEntrega)}</strong> — {venta.name}
                               </li>
                            ))}
                         </ul>

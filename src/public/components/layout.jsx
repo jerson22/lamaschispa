@@ -39,7 +39,7 @@ export default function Layout() {
                <Link to="/accesorios" onClick={() => setOpen(false)}>Accesorios</Link>
                {isAdmin ? (
                   <>
-                     <Link to="/rentas" onClick={() => setOpen(false)}>Rentas</Link>
+                     {/* <Link to="/rentas" onClick={() => setOpen(false)}>Rentas</Link> */}
                      <Link to="/admin" onClick={() => setOpen(false)} style={{ color: '#db2777', fontWeight: 'bold' }}>Admin</Link>
                   </>
                ) : (

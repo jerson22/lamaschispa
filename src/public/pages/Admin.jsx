@@ -3,30 +3,10 @@ import { useNavigate } from 'react-router-dom';
 
 const Admin = () => {
    const [productos, setProductos] = useState([]);
-   const [clientes, setClientes] = useState([]);
-   const [form, setForm] = useState({
-      id: null,
+
+   const [ventasForm, setVentasForm] = useState({
       name: '',
-      precio_venta: '',
-      precio_renta: '',
-      silueta: '',
-      mangas: '',
-      color: '',
-      talla: '',
-      imagenes: [''],
-      descripcion: '',
-      vestido: true
-   });
-   const [clientForm, setClientForm] = useState({
-      nombre: '',
-      telefono: '',
-      email: '',
-      municipio: ''
-   });
-   const [ventasForm, setventasForm] = useState({
-      clientId: '',
-      name: '',
-      prodcutId: '',
+      productId: '',
       bolso: false,
       aretes: false,
       ajuste: false,
@@ -34,25 +14,32 @@ const Admin = () => {
       fechaRenta: '',
       fechaEntrega: '',
       fechaDevolucion: '',
-      anticipo: '',
-      pendiente: '',
+      anticipoEfectivo: '',
+      anticipoTarjeta: '',
+      pendienteEfectivo: '',
+      pendienteTarjeta: '',
+      liquidado: false,
       notas: '',
    });
    const [loading, setLoading] = useState(true);
    const [uploading, setUploading] = useState(false);
    const [error, setError] = useState(null);
    const [searchTerm, setSearchTerm] = useState('');
+   
+   // NUEVOS ESTADOS PARA EL BUSCADOR DE PRODUCTOS CON IMAGEN
+   const [productSearch, setProductSearch] = useState('');
+   const [showDropdown, setShowDropdown] = useState(false);
+   const [selectedProduct, setSelectedProduct] = useState(null);
+
    const navigate = useNavigate();
    const token = localStorage.getItem('token');
 
-   // Función para limpiar sesión
    const clearSession = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       navigate('/login');
    };
 
-   // Función para verificar si la respuesta es un error de autenticación
    const handleAuthError = (response) => {
       if (response.status === 401 || response.status === 403) {
          clearSession();
@@ -62,7 +49,6 @@ const Admin = () => {
    };
 
    useEffect(() => {
-      // Verificar si hay token y si es admin
       const storedUser = localStorage.getItem('user');
       let parsedUser = null;
       try {
@@ -76,13 +62,10 @@ const Admin = () => {
          return;
       }
 
-      // Validar que el token siga siendo válido en el servidor
       validateToken();
       fetchProductos();
-      fetchClientes();
    }, [token, navigate]);
 
-   // Función para validar el token con el servidor
    const validateToken = async () => {
       try {
          const response = await fetch('/auth/validate', {
@@ -90,7 +73,6 @@ const Admin = () => {
          });
 
          if (response.status === 401 || response.status === 403) {
-            // Token inválido, expirado o no autorizado
             clearSession();
             return false;
          }
@@ -105,14 +87,14 @@ const Admin = () => {
    const fetchProductos = async () => {
       try {
          const response = await fetch('/api/productos');
-
+         
          if (!response.ok) {
             console.error('Error fetching productos:', response.status);
             setProductos([]);
             setLoading(false);
             return;
          }
-
+         
          const data = await response.json();
          setProductos(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -124,212 +106,43 @@ const Admin = () => {
       }
    };
 
-   const fetchClientes = async () => {
-      try {
-         const response = await fetch('/api/clientes', {
-            headers: { 'auth-token': token }
-         });
-
-         if (handleAuthError(response)) return;
-
-         if (!response.ok) {
-            console.error('Error fetching clientes:', response.status);
-            setClientes([]);
-            return;
-         }
-
-         const data = await response.json();
-         setClientes(Array.isArray(data) ? data : []);
-      } catch (err) {
-         console.error('Error en fetchClientes:', err);
-         setClientes([]);
-      }
-   };
-
-   const handleChange = (e) => {
-      setForm({ ...form, [e.target.name]: e.target.value });
-   };
-
-   const handleSubmit = async (e) => {
-      e.preventDefault();
-      const method = form.id ? 'PUT' : 'POST';
-      const url = form.id ? `/api/productos/${form.id}` : '/api/productos';
-
-      try {
-         const response = await fetch(url, {
-            method,
-            headers: {
-               'Content-Type': 'application/json',
-               'auth-token': token
-            },
-            body: JSON.stringify(form)
-         });
-
-         if (handleAuthError(response)) return;
-
-         if (response.ok) {
-            alert(form.id ? 'Producto actualizado' : 'Producto creado');
-            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', silueta: '', mangas: '', imagenes: [''], descripcion: '', vestido: true });
-            fetchProductos();
-         } else {
-            const data = await response.json();
-            alert(data.error || 'Error en la operación');
-         }
-      } catch (err) {
-         alert('Error de conexión');
-      }
-   };
-
-   const handleEdit = (v) => {
-      setForm({
-         ...v,
-         vestido: v.vestido === '1' || v.vestido === true || v.vestido === 1,
-         imagenes: v.imagenes && v.imagenes.length > 0 ? v.imagenes : ['']
-      });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-   };
-
-   const handleDelete = async (id) => {
-      if (!window.confirm('¿Seguro que quieres eliminar este producto?')) return;
-
-      try {
-         const response = await fetch(`/api/productos/${id}`, {
-            method: 'DELETE',
-            headers: { 'auth-token': token }
-         });
-
-         if (handleAuthError(response)) return;
-
-         if (response.ok) {
-            fetchProductos();
-         } else {
-            alert('No se pudo eliminar');
-         }
-      } catch (err) {
-         alert('Error de conexión');
-      }
-   };
-
-   const handleImageChange = (index, value) => {
-      const newImagenes = [...form.imagenes];
-      newImagenes[index] = value;
-      setForm({ ...form, imagenes: newImagenes });
-   };
-
-   const addImageInput = () => {
-      setForm({ ...form, imagenes: [...form.imagenes, ''] });
-   };
-
-   const removeImageInput = (index) => {
-      if (form.imagenes.length > 1) {
-         const newImagenes = form.imagenes.filter((_, i) => i !== index);
-         setForm({ ...form, imagenes: newImagenes });
-      }
-   };
-
-   const handleFileUpload = async (e) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-
-      setUploading(true);
-      const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-         formData.append('images', files[i]);
-      }
-
-      try {
-         const response = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'auth-token': token },
-            body: formData
-         });
-         const data = await response.json();
-         if (response.ok) {
-            const filteredImagenes = form.imagenes.filter(img => img.trim() !== '');
-            setForm({ ...form, imagenes: [...filteredImagenes, ...data.filenames] });
-         } else {
-            alert(data.error || 'Error al subir imágenes');
-         }
-      } catch (err) {
-         alert('Error de conexión al subir imágenes');
-      } finally {
-         setUploading(false);
-      }
-   };
-
-   const handleClientChange = (e) => {
-      setClientForm({ ...clientForm, [e.target.name]: e.target.value });
-   };
-
-   const handleClientSubmit = async (e) => {
-      e.preventDefault();
-      try {
-         const response = await fetch('/api/clientes', {
-            method: 'POST',
-            headers: {
-               'Content-Type': 'application/json',
-               'auth-token': token
-            },
-            body: JSON.stringify(clientForm)
-         });
-
-         if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'No se pudo crear el cliente');
-         }
-
-         const newClient = await response.json();
-         setClientes([...clientes, newClient]);
-         setClientForm({ nombre: '', telefono: '', email: '', municipio: '' });
-         alert('Cliente registrado correctamente');
-      } catch (err) {
-         alert(err.message);
-      }
-   };
-
-   const handleReserveChange = (e) => {
+   const handleVentasChange = (e) => {
       const { name, value, type, checked } = e.target;
-      setventasForm({
-         ...ventasForm,
-         [name]: type === 'checkbox' ? checked : value
+      setVentasForm({ 
+         ...ventasForm, 
+         [name]: type === 'checkbox' ? checked : value 
       });
    };
 
-   const handleReserveItemChange = (index, field, value) => {
-      const newItems = [...ventasForm.items];
-      newItems[index][field] = value;
-      setventasForm({ ...ventasForm, items: newItems });
-   };
-
-   const addReserveItem = () => {
-      setventasForm({
+   // FUNCIÓN CUANDO SE SELECCIONA UN PRODUCTO DEL DESPLEGABLE
+   const handleSelectProduct = (producto) => {
+      setVentasForm({
          ...ventasForm,
-         items: [...ventasForm.items, { prodcutId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
+         productId: producto.id // Guarda el ID numérico en tu formulario original
       });
+      setProductSearch(producto.name); // Muestra el nombre en el input de búsqueda
+      setSelectedProduct(producto); // Guarda el objeto para renderizar la foto
+      setShowDropdown(false); // Cierra el menú
    };
 
-   const removeReserveItem = (index) => {
-      if (ventasForm.items.length === 1) return;
-      const newItems = ventasForm.items.filter((_, i) => i !== index);
-      setventasForm({ ...ventasForm, items: newItems });
-   };
-
-   const handleReserveSubmit = async (e) => {
+   const handleVentaSubmit = async (e) => {
       e.preventDefault();
       try {
          const body = {
-            clientId: Number(ventasForm.clientId),
             name: ventasForm.name,
-            prodcutId: Number(ventasForm.prodcutId),
-            bolso: ventasForm.bolso ? 1 : 0,
-            aretes: ventasForm.aretes ? 1 : 0,
-            ajuste: ventasForm.ajuste ? 1 : 0,
+            productId: Number(ventasForm.productId),
+            bolso: ventasForm.bolso,
+            aretes: ventasForm.aretes,
+            ajuste: ventasForm.ajuste,
             fechaAjustes: ventasForm.fechaAjustes || null,
             fechaRenta: ventasForm.fechaRenta,
             fechaEntrega: ventasForm.fechaEntrega,
             fechaDevolucion: ventasForm.fechaDevolucion,
-            anticipo: Number(ventasForm.anticipo),
-            pendiente: Number(ventasForm.pendiente),
+            anticipoEfectivo: Number(ventasForm.anticipoEfectivo),
+            pendienteEfectivo: Number(ventasForm.pendienteEfectivo),
+            anticipoTarjeta: Number(ventasForm.anticipoTarjeta),
+            pendienteTarjeta: Number(ventasForm.pendienteTarjeta),
+            liquidado: ventasForm.liquidado,
             notas: ventasForm.notas
          };
 
@@ -344,21 +157,18 @@ const Admin = () => {
 
          if (!response.ok) {
             const text = await response.text();
-            let errorMessage = 'Error del servidor al crear la venta';
             try {
                const data = JSON.parse(text);
-               errorMessage = data.error || errorMessage;
+               throw new Error(data.error || 'No se pudo crear la venta');
             } catch (parseErr) {
                console.error('Error response:', text);
+               throw new Error('Error del servidor al crear la venta');
             }
-            throw new Error(errorMessage);
          }
 
-         alert('Venta registrada correctamente');
-         setventasForm({
-            clientId: '',
+         setVentasForm({
             name: '',
-            prodcutId: '',
+            productId: '',
             bolso: false,
             aretes: false,
             ajuste: false,
@@ -366,340 +176,203 @@ const Admin = () => {
             fechaRenta: '',
             fechaEntrega: '',
             fechaDevolucion: '',
-            anticipo: '',
-            pendiente: '',
+            anticipoEfectivo: '',
+            anticipoTarjeta: '',
+            pendienteEfectivo: '',
+            pendienteTarjeta: '',
+            liquidado: false,
             notas: '',
          });
-         alert('venta registrada correctamente');
+         
+         // Limpiar estados extras del buscador
+         setProductSearch('');
+         setSelectedProduct(null);
+
+         alert('Venta registrada correctamente');
       } catch (err) {
          alert(err.message);
       }
    };
 
-   const logout = () => {
-      localStorage.clear();
-      navigate('/login');
-   };
-
    if (loading) return <div className="admin-msg">Cargando panel...</div>;
 
-   const productosFiltrados = productos.filter((p) => {
-      const term = searchTerm.toLowerCase();
-      const tipo = (p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'vestido' : 'accesorio';
+   // Filtrado dinámico en tiempo real para las sugerencias del desplegable
+   const sugerenciasProductos = productos.filter((p) => {
+      const term = productSearch.toLowerCase();
       return (
          p.name.toLowerCase().includes(term) ||
          p.id.toString().includes(term) ||
-         tipo.includes(term) ||
          (p.talla && p.talla.toLowerCase().includes(term))
       );
    });
 
    return (
       <div className="admin-container">
-         <div className="admin-header">
-            <h1>Panel de Administración</h1>
-            <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
-         </div>
-
-         <section className="form-section">
-            <h2>{form.id ? 'Editar Producto' : 'Subir Nuevo Producto'}</h2>
-            <form onSubmit={handleSubmit} className="admin-form">
-               <div className="input-group full-width" style={{ marginBottom: '20px' }}>
-                  <label>Tipo de Producto</label>
-                  <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'normal', cursor: 'pointer' }}>
-                        <input
-                           type="radio"
-                           name="vestido"
-                           checked={form.vestido === true}
-                           onChange={() => setForm({ ...form, vestido: true })}
-                        />
-                        Vestido
-                     </label>
-                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'normal', cursor: 'pointer' }}>
-                        <input
-                           type="radio"
-                           name="vestido"
-                           checked={form.vestido === false}
-                           onChange={() => setForm({ ...form, vestido: false })}
-                        />
-                        Accesorio
-                     </label>
-                  </div>
-               </div>
-               <div className="form-grid">
-                  <div className="input-group">
-                     <label>Nombre del Producto</label>
-                     <input name="name" value={form.name} onChange={handleChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>Precio Venta</label>
-                     <input type="number" name="precio_venta" value={form.precio_venta} onChange={handleChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>Precio Renta</label>
-                     <input type="number" name="precio_renta" value={form.precio_renta} onChange={handleChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>Color</label>
-                     <input name="color" value={form.color} onChange={handleChange} required />
-                  </div>
-                  {form.vestido && (
-                     <>
-                        <div className="input-group">
-                           <label>Talla</label>
-                           <input name="talla" value={form.talla} onChange={handleChange} required />
-                        </div>
-                        <div className="input-group">
-                           <label>Silueta</label>
-                           <select className="filtro-select" name="silueta" value={form.silueta} onChange={handleChange} required>
-                              <option value="">Selecciona una silueta</option>
-                              <option value="a">Corte A</option>
-                              <option value="sirena">Corte Sirena</option>
-                              <option value="recto">Corte Recto</option>
-                           </select>
-                        </div>
-                        <div className="input-group">
-                           <label>Mangas</label>
-                           <select className="filtro-select" name="mangas" value={form.mangas} onChange={handleChange} required>
-                              <option value="">Selecciona una opción</option>
-                              <option value="mangas">Mangas</option>
-                              <option value="mangas caidas">Mangas Caidas</option>
-                              <option value="strapless">Strapless</option>
-                              <option value="tirante">tirante</option>
-                           </select>
-                        </div>
-                     </>
-                  )}
-               </div>
-
-               <div className="input-group full-width" style={{ marginTop: '20px' }}>
-                  <label>Fotos (en orden de aparición)</label>
-
-                  <div style={{ border: '2px dashed #db2777', padding: '20px', borderRadius: '10px', textAlign: 'center', backgroundColor: '#fdf2f8', position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.3s' }}>
-                     <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
-                        disabled={uploading}
-                     />
-                     <p style={{ margin: 0, color: '#db2777', fontWeight: 'bold' }}>
-                        {uploading ? 'Subiendo archivos...' : 'Arrastra tus fotos aquí o haz clic para subir 📁'}
-                     </p>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                     {form.imagenes.map((img, index) => (
-                        <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                           <span style={{ padding: '8px 12px', background: '#fdf2f8', color: '#db2777', borderRadius: '5px', fontWeight: 'bold' }}>{index + 1}</span>
-                           <input
-                              value={img}
-                              onChange={(e) => handleImageChange(index, e.target.value)}
-                              placeholder={`Ej. foto_${index + 1}.jpg`}
-                              style={{ flex: 1 }}
-                              required={index === 0}
-                           />
-                           {form.imagenes.length > 1 && (
-                              <button type="button" onClick={() => removeImageInput(index)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }} title="Quitar foto">X</button>
-                           )}
-                        </div>
-                     ))}
-                  </div>
-                  <button type="button" onClick={addImageInput} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', marginTop: '10px', fontWeight: 'bold', width: 'fit-content' }}>+ Añadir URL manualmente</button>
-               </div>
-
-               <div className="input-group full-width" style={{ marginTop: '20px' }}>
-                  <label>Descripción</label>
-                  <textarea name="descripcion" value={form.descripcion} onChange={handleChange} rows="3"></textarea>
-               </div>
-               <div className="form-actions">
-                  <button type="submit" className="save-btn">{form.id ? 'Guardar Cambios' : 'Publicar Producto'}</button>
-                  {form.id && <button type="button" onClick={() => setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true })} className="cancel-btn">Cancelar</button>}
-               </div>
-            </form>
-         </section>
-
-         <section className="form-section">
-            <h2>Registrar nuevo cliente</h2>
-            <form onSubmit={handleClientSubmit} className="admin-form">
-               <div className="form-grid">
-                  <div className="input-group">
-                     <label>Nombre</label>
-                     <input name="nombre" value={clientForm.nombre} onChange={handleClientChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>Teléfono</label>
-                     <input name="telefono" value={clientForm.telefono} onChange={handleClientChange} />
-                  </div>
-                  <div className="input-group">
-                     <label>Email</label>
-                     <input type="email" name="email" value={clientForm.email} onChange={handleClientChange} required />
-                  </div>
-                  <div className="input-group">
-                     <label>Municipio</label>
-                     <input name="municipio" value={clientForm.municipio} onChange={handleClientChange} />
-                  </div>
-               </div>
-               <div className="form-actions">
-                  <button type="submit" className="save-btn">Registrar Cliente</button>
-               </div>
-            </form>
-         </section>
-
          <section className="form-section container">
             <h2>Registrar Renta / Compra</h2>
-            <form onSubmit={handleReserveSubmit} className="admin-form">
-               {/* FILA 1: Columnas 70% y 30% */}
+            <form onSubmit={handleVentaSubmit} className="admin-form">
+               
                <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
                   {/* columna izquierda */}
                   <div style={{ flex: '0 0 calc(60% - 10px)' }}>
                      <div className="input-group">
-                        <label>Núm. 10</label>
+                        <label>Cliente</label>
+                        <input type="text" name="name" value={ventasForm.name} onChange={handleVentasChange} required />
                      </div>
-                     <div className="input-group">
-                        <label>Nombre</label>
-                        <input type="text" name="name" value={ventasForm.name} onChange={handleReserveChange} required />
+                     
+                     {/* NUEVO INPUT DE PRODUCTO INTERACTIVO */}
+                     <div className="input-group" style={{ position: 'relative' }}>
+                        <label>Producto (Escribe para buscar)</label>
+                        <input 
+                           type="text" 
+                           placeholder="Buscar por nombre, ID o talla..." 
+                           value={productSearch} 
+                           onChange={(e) => {
+                              setProductSearch(e.target.value);
+                              setShowDropdown(true);
+                           }}
+                           onFocus={() => setShowDropdown(true)}
+                           required
+                        />
+                        
+                        {/* Menú desplegable con los resultados de la base de datos */}
+                        {showDropdown && productSearch.length > 0 && (
+                           <div className="dropdown-productos">
+                              {sugerenciasProductos.length > 0 ? (
+                                 sugerenciasProductos.map((p) => (
+                                    <div 
+                                       key={p.id} 
+                                       className="dropdown-item-producto"
+                                       onClick={() => handleSelectProduct(p)}
+                                    >
+                                       {/* Ajusta p.imagen o la propiedad de tu BD donde guardes la URL de la foto */}
+                                       <img 
+                                          src={p.imagenes && p.imagenes[0] ? `../images/${p.imagenes[0]}` : 'https://via.placeholder.com/40x50?text=No+Img'}
+                                          alt={p.name} 
+                                       />
+                                       <div>
+                                          <strong>{p.name}</strong>
+                                          <span>ID: {p.id} {p.talla ? `| Talla: ${p.talla}` : ''}</span>
+                                       </div>
+                                    </div>
+                                 ))
+                              ) : (
+                                 <div style={{ padding: '10px', color: '#888', fontSize: '0.9rem' }}>
+                                    No se encontraron productos
+                                 </div>
+                              )}
+                           </div>
+                        )}
                      </div>
-                     <div className="input-group">
-                        <label>Producto</label>
-                        <input type="text" name="producto" value={ventasForm.producto} onChange={handleReserveChange} />
-                     </div>
-                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
+
+                     {/* VISTA PREVIA: Se muestra solo si ya se seleccionó un producto */}
+                     {selectedProduct && (
+                        <div className="producto-preview-box">
+                           {console.log(selectedProduct.imagenes)}
+                           <img 
+                              src={selectedProduct.imagenes && selectedProduct.imagenes[0] ? `../images/${selectedProduct.imagenes[0]}` : 'https://via.placeholder.com/100x130?text=No+Foto'} 
+                              alt="Vista previa" 
+                           />
+                           <div className="preview-details">
+                              <h4>{selectedProduct.name}</h4>
+                              {/* <p><strong>ID Seleccionado:</strong> {selectedProduct.id}</p> */}
+                              {selectedProduct.talla && <p><strong>Talla:</strong> {selectedProduct.talla}</p>}
+                              {selectedProduct.precio_renta && <p><strong>Precio Renta:</strong> ${selectedProduct.precio_renta}</p>}
+                              {selectedProduct.precio_venta && <p><strong>Precio Venta:</strong> ${selectedProduct.precio_venta}</p>}
+                           </div>
+                        </div>
+                     )}
+
+                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px', marginTop: '15px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
-                           <input type="checkbox" name="bolso" checked={ventasForm.bolso} onChange={handleReserveChange} />
+                           <input type="checkbox" name="bolso" checked={ventasForm.bolso} onChange={handleVentasChange} />
                            Bolso
                         </label>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
-                           <input type="checkbox" name="aretes" checked={ventasForm.aretes} onChange={handleReserveChange} />
+                           <input type="checkbox" name="aretes" checked={ventasForm.aretes} onChange={handleVentasChange} />
                            Aretes
                         </label>
                      </div>
                      <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
-                           <input type="checkbox" name="ajuste" checked={ventasForm.ajuste} onChange={handleReserveChange} />
+                           <input type="checkbox" name="ajuste" checked={ventasForm.ajuste} onChange={handleVentasChange} />
                            Ajustes
                         </label>
-                        <input type="date" name="fechaAjustes" value={ventasForm.fechaAjustes} onChange={handleReserveChange} style={{ flex: 1 }} />
+                        <input type="date" name="fechaAjustes" value={ventasForm.fechaAjustes} onChange={handleVentasChange} style={{ flex: 1 }} />
                      </div>
                   </div>
+                  
                   {/* columna derecha */}
                   <div style={{ flex: '0 0 calc(40% - 10px)' }}>
                      <div className="input-group">
                         <label>Fecha de Renta</label>
-                        <input type="date" name="fechaRenta" value={ventasForm.fechaRenta} onChange={handleReserveChange} />
+                        <input type="date" name="fechaRenta" value={ventasForm.fechaRenta} onChange={handleVentasChange} required />
                      </div>
                      <div className="input-group">
                         <label>Fecha de Entrega</label>
-                        <input type="date" name="fechaEntrega" value={ventasForm.fechaEntrega} onChange={handleReserveChange} />
+                        <input type="date" name="fechaEntrega" value={ventasForm.fechaEntrega} onChange={handleVentasChange} />
                      </div>
                      <div className="input-group">
                         <label>Fecha de Devolucion</label>
-                        <input type="date" name="fechaDevolucion" value={ventasForm.fechaDevolucion} onChange={handleReserveChange} />
+                        <input type="date" name="fechaDevolucion" value={ventasForm.fechaDevolucion} onChange={handleVentasChange} />
                      </div>
                   </div>
                </div>
-
-               {/* FILA 2: Notas 100% */}
+               
+               {/* FILA 2: Notas */}
                <div style={{ marginBottom: '20px', borderTop: '2px solid #eee', paddingTop: '20px' }}>
                   <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '10px', color: '#555' }}>Notas</label>
-                  <textarea name="notas" value={ventasForm.notas} onChange={handleReserveChange} placeholder="Opcional" style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', minHeight: '80px', fontFamily: 'inherit' }} />
+                  <textarea name="notas" value={ventasForm.notas} onChange={handleVentasChange} placeholder="Opcional" style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', minHeight: '80px', fontFamily: 'inherit' }} />
                </div>
-
-               {/* FILA 3: Anticipo y Total 100% */}
+               
+               {/* FILA 3: Anticipo y Total */}
                <div style={{ display: 'flex', gap: '20px', borderTop: '2px solid #eee', paddingTop: '20px' }}>
-                  <div style={{ flex: '1' }}>
-                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Anticipo</label>
-                     <input type="number" name="anticipo" value={ventasForm.anticipo} onChange={handleReserveChange} />
+                  <div style={{ flex: '1' }} className="input-groupA">
+                     <h3>Anticipo</h3>
+                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Efectivo</label>
+                     <input type="number" name="anticipoEfectivo" value={ventasForm.anticipoEfectivo} onChange={handleVentasChange} />
+                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Tarjeta</label>
+                     <input type="number" name="anticipoTarjeta" value={ventasForm.anticipoTarjeta} onChange={handleVentasChange} />
                   </div>
-                  <div style={{ flex: '1' }}>
-                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Pendiente</label>
-                     <input type="number" name="pendiente" value={ventasForm.pendiente} onChange={handleReserveChange} />
+                  <div style={{ flex: '1' }} className="input-groupA">
+                     <h3>{selectedProduct ? `Pendiente $${Number(selectedProduct.precio_renta) - Number(ventasForm.anticipoEfectivo) - Number(ventasForm.anticipoTarjeta)}` : 'Pendiente'}</h3>
+                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Efectivo</label>
+                     <input type="number" name="pendienteEfectivo" value={ventasForm.pendienteEfectivo} onChange={handleVentasChange} />
+                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px', color: '#555' }}>Tarjeta</label>
+                     <input type="number" name="pendienteTarjeta" value={ventasForm.pendienteTarjeta} onChange={handleVentasChange} />
+                  </div>
+                  <div>
+                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'normal', cursor: 'pointer', margin: 0 }}>
+                        <input type="checkbox" name="liquidado" checked={ventasForm.liquidado} onChange={handleVentasChange} />
+                        Liquidado
+                     </label>
                   </div>
                </div>
-
+               
                <div className="form-actions">
                   <button type="submit" className="save-btn">Registrar renta / compra</button>
                </div>
             </form>
          </section>
 
-         <section className="list-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
-               <h2 style={{ margin: 0 }}>Gestión de Inventario</h2>
-               <input
-                  type="text"
-                  placeholder="Buscar por ID, nombre, tipo o talla..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ padding: '10px 15px', border: '1px solid #ddd', borderRadius: '8px', minWidth: '250px', outline: 'none' }}
-               />
-            </div>
-            <div className="admin-table-container">
-               <table className="admin-table">
-                  <thead>
-                     <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Venta</th>
-                        <th>Renta</th>
-                        <th>Talla</th>
-                        <th>Acciones</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     {productosFiltrados.length > 0 ? (
-                        productosFiltrados.map(p => (
-                           <tr key={p.id}>
-                              <td>{p.id}</td>
-                              <td>{p.name}</td>
-                              <td>{(p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'Vestido' : 'Accesorio'}</td>
-                              <td>${p.precio_venta}</td>
-                              <td>${p.precio_renta}</td>
-                              <td>{p.talla || '-'}</td>
-                              <td>
-                                 <button onClick={() => handleEdit(p)} className="edit-btn">Editar</button>
-                                 <button onClick={() => handleDelete(p.id)} className="delete-btn">Borrar</button>
-                              </td>
-                           </tr>
-                        ))
-                     ) : (
-                        <tr>
-                           <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No se encontraron productos con esa búsqueda.</td>
-                        </tr>
-                     )}
-                  </tbody>
-               </table>
-            </div>
-         </section>
+         {/* CERRAR DROPDOWN SI SE HACE CLICK FUERA */}
+         {showDropdown && (
+            <div 
+               style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }} 
+               onClick={() => setShowDropdown(false)} 
+            />
+         )}
 
          <style>{`
+            .input-groupA {
+               border: 1px solid #6d6d6d;
+               padding: 15px;
+               border-radius: 10px;
+            }
             .admin-container {
                max-width: 1000px;
-               margin: 40px auto;
-               padding: 20px;
-            }
-            .admin-header {
-               display: flex;
-               justify-content: space-between;
-               align-items: center;
-               margin-bottom: 30px;
-            }
-            .admin-header h1 {
-               font-family: 'Caveat', cursive;
-               font-size: 2.5rem;
-               color: #333;
-               margin: 0;
-            }
-            .logout-btn {
-               background: #666;
-               color: white;
-               border: none;
-               padding: 8px 15px;
-               border-radius: 8px;
-               cursor: pointer;
+               margin: 10px auto;
+               padding: 10px;
             }
             .form-section {
                background: white;
@@ -708,19 +381,81 @@ const Admin = () => {
                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
                margin-bottom: 40px;
             }
-            .conteiner{
-               display: flex;
+            
+            /* NUEVOS ESTILOS PARA EL DESPLEGABLE DE PRODUCTOS */
+            .dropdown-productos {
+               position: absolute;
+               top: 100%;
+               left: 0;
                width: 100%;
+               background: white;
+               border: 1px solid #ddd;
+               border-radius: 8px;
+               box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+               max-height: 250px;
+               overflow-y: auto;
+               z-index: 10;
             }
-            .form-grid {
-               display: grid;
-               grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-               gap: 20px;
+            .dropdown-item-producto {
+               display: flex;
+               align-items: center;
+               padding: 8px 12px;
+               cursor: pointer;
+               border-bottom: 1px solid #f5f5f5;
+               transition: background 0.2s;
             }
-            .full-width {
-               grid-column: 1 / -1;
-               margin-top: 20px;
+            .dropdown-item-producto:hover {
+               background: #fdf2f8;
             }
+            .dropdown-item-producto img {
+               width: 80px;
+               height: 100px;
+               object-fit: cover;
+               border-radius: 4px;
+               margin-right: 12px;
+            }
+            .dropdown-item-producto div {
+               display: flex;
+               flex-direction: column;
+            }
+            .dropdown-item-producto strong {
+               font-size: 0.95rem;
+               color: #333;
+            }
+            .dropdown-item-producto span {
+               font-size: 0.8rem;
+               color: #777;
+            }
+
+            /* ESTILOS PARA LA TARJETA DE VISTA PREVIA */
+            .producto-preview-box {
+               display: flex;
+               align-items: center;
+               gap: 15px;
+               background: #fdf2f8;
+               border: 1px dashed #db2777;
+               padding: 12px;
+               border-radius: 10px;
+               margin-top: 15px;
+            }
+            .producto-preview-box img {
+               width: 150px;
+               height: 200px;
+               object-fit: cover;
+               border-radius: 6px;
+               box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            .preview-details h4 {
+               margin: 0 0 5px 0;
+               color: #db2777;
+               font-size: 1.05rem;
+            }
+            .preview-details p {
+               margin: 2px 0;
+               font-size: 0.9rem;
+               color: #555;
+            }
+
             .admin-form label {
                display: block;
                font-size: 0.9rem;
@@ -736,11 +471,6 @@ const Admin = () => {
                outline: none;
                box-sizing: border-box;
             }
-            .admin-form input[type="radio"] {
-               width: auto;
-               margin: 0;
-               display: inline-block;
-            }
             .form-actions {
                margin-top: 25px;
                display: flex;
@@ -755,92 +485,10 @@ const Admin = () => {
                font-weight: bold;
                cursor: pointer;
             }
-            .cancel-btn {
-               background: #eee;
-               color: #333;
-               border: none;
-               padding: 12px 25px;
-               border-radius: 8px;
-               cursor: pointer;
-            }
-            .admin-table-container {
-               background: white;
-               border-radius: 15px;
-               overflow-x: auto;
-               box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            }
-            .admin-table {
-               width: 100%;
-               border-collapse: collapse;
-               min-width: 600px;
-            }
-            .admin-table th, .admin-table td {
-               padding: 15px;
-               text-align: left;
-               border-bottom: 1px solid #eee;
-            }
-            .admin-table th {
-               background: #fdf2f8;
-               color: #db2777;
-            }
-            .edit-btn {
-               background: #3b82f6;
-               color: white;
-               border: none;
-               padding: 5px 10px;
-               border-radius: 5px;
-               margin-right: 5px;
-               cursor: pointer;
-            }
-            .delete-btn {
-               background: #ef4444;
-               color: white;
-               border: none;
-               padding: 5px 10px;
-               border-radius: 5px;
-               cursor: pointer;
-            }
-            .admin-msg {
-               text-align: center;
-               padding: 100px;
-               font-size: 1.5rem;
-            }
-
-            /* RESPONSIVO MÓVIL */
             @media (max-width: 768px) {
-               .admin-container {
-                  margin: 20px auto;
-                  padding: 10px;
-               }
-               .admin-header {
-                  flex-direction: column;
-                  gap: 15px;
-                  text-align: center;
-               }
-               .admin-header h1 {
-                  font-size: 2rem;
-               }
-               .form-section {
-                  padding: 20px;
-               }
-               .form-grid {
-                  grid-template-columns: 1fr;
-               }
-               .form-actions {
-                  flex-direction: column;
-               }
-               .save-btn, .cancel-btn {
-                  width: 100%;
-               }
-               .admin-table th, .admin-table td {
-                  padding: 10px;
-                  font-size: 0.9rem;
-               }
-               .edit-btn, .delete-btn {
-                  margin-bottom: 5px;
-                  display: block;
-                  width: 100%;
-               }
+               .admin-container { margin: 20px auto; padding: 10px; }
+               .form-section { padding: 20px; }
+               .save-btn { width: 100%; }
             }
          `}</style>
       </div>
