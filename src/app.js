@@ -372,3 +372,11 @@ app.get(/^(?!\/api\/).*$/, (req, res) => {
 app.listen(port, () => {
    console.log(`Example app listening on port ${port}`);
 });
+
+// 1. Para que Express encuentre tus fotos subidas por FileZilla
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
+// 2. El atrapa-todo definitivo que repara el error del asterisco
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dist', 'index.html'));
+});
