@@ -27,7 +27,7 @@ export default function ProductCard({ product }) {
          <div className={`product-image-container ${isAccessory ? 'is-accessory' : ''}`}>
             {imagenes.length > 0 ? (
                <img
-                  src={'../images/' + imagenes[currentIndex]}
+                  src={'/images/' + imagenes[currentIndex]}
                   alt={product.name}
                   className="product-image"
                />

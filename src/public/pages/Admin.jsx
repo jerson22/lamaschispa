@@ -247,7 +247,7 @@ const Admin = () => {
                                     >
                                        {/* Ajusta p.imagen o la propiedad de tu BD donde guardes la URL de la foto */}
                                        <img 
-                                          src={p.imagenes && p.imagenes[0] ? `../images/${p.imagenes[0]}` : 'https://via.placeholder.com/40x50?text=No+Img'}
+                                          src={p.imagenes && p.imagenes[0] ? `/images/${p.imagenes[0]}` : 'https://via.placeholder.com/40x50?text=No+Img'}
                                           alt={p.name} 
                                        />
                                        <div>
@@ -270,7 +270,7 @@ const Admin = () => {
                         <div className="producto-preview-box">
                            {console.log(selectedProduct.imagenes)}
                            <img 
-                              src={selectedProduct.imagenes && selectedProduct.imagenes[0] ? `../images/${selectedProduct.imagenes[0]}` : 'https://via.placeholder.com/100x130?text=No+Foto'} 
+                              src={selectedProduct.imagenes && selectedProduct.imagenes[0] ? `/images/${selectedProduct.imagenes[0]}` : 'https://via.placeholder.com/100x130?text=No+Foto'} 
                               alt="Vista previa" 
                            />
                            <div className="preview-details">
