@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, NavLink } from "react-router-dom"; // Limpiamos los imports duplicados
 
 export default function AdminLayout() {
     const navigate = useNavigate();
@@ -13,12 +13,12 @@ export default function AdminLayout() {
          <aside className="aside-sidebar">
             <h2>Panel Admin</h2>
             <nav className="admin-nav">
-               {/* Quitamos los estilos inline para manejarlos limpiamente desde el CSS */}
-               <Link to="/admin">Nueva Renta</Link>
-               <Link to="/admin/rentas">Rentas</Link>
-               <Link to="/admin/nuevo-cliente">Nuevo Cliente</Link>
-               <Link to="/admin/inventario">Inventario</Link>
-               
+               {/* 1. Agregamos 'end' aquí para que no se quede prendido siempre */}
+               <NavLink to="/admin" end>Nueva Renta</NavLink>
+               <NavLink to="/admin/rentas">Rentas</NavLink>
+               <NavLink to="/admin/nuevo-cliente">Nuevo Cliente</NavLink>
+               <NavLink to="/admin/inventario">Inventario</NavLink>
+
                <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
             </nav>
          </aside>
@@ -36,21 +36,20 @@ export default function AdminLayout() {
                color: #1f2937; 
                padding: 24px 16px;
                position: sticky;      
-               top: 90px; /* 1. Cambiado de 0 a 90px para que respete tu barra superior */
-               height: calc(100vh - 90px); /* 2. Restamos los 90px para que encaje perfecto en la pantalla */
+               top: 90px; 
+               height: calc(100vh - 90px); 
                box-sizing: border-box;
                border-right: 1px solid #f3e8ff;
                display: flex;
                flex-direction: column;
                gap: 20px;
             }
-            
 
             .aside-sidebar h2 {
                font-size: 1.2rem;
                margin: 0;
                padding-left: 12px;
-               color: #db2777; /* Tono rosa oscuro elegante */
+               color: #db2777; 
                font-weight: 700;
             }
 
@@ -58,14 +57,13 @@ export default function AdminLayout() {
                display: flex;
                flex-direction: column;
                gap: 8px;
-               flex: 1; /* 3. Cambiado a flex:1 para asegurarse de que use el espacio disponible */
+               flex: 1; 
                box-sizing: border-box;
             }
 
-            /* 🎯 AQUÍ QUITAMOS EL SUBRAYADO Y DISEÑAMOS LOS LINKS */
             .admin-nav a {
-               color: #4b5563;           /* Gris oscuro más moderno que el negro puro */
-               text-decoration: none;    /* ¡ESTO QUITA EL SUBRAYADO! */
+               color: #4b5563;           
+               text-decoration: none;    
                padding: 10px 12px;
                border-radius: 8px;
                font-weight: 500;
@@ -73,11 +71,18 @@ export default function AdminLayout() {
                transition: all 0.2s ease-in-out;
             }
 
-            /* Efecto cuando pasas el mouse sobre los enlaces */
             .admin-nav a:hover {
-               background-color: #fce7f3; /* Fondo rosa sutil */
-               color: #db2777;            /* Texto rosa oscuro */
-               padding-left: 16px;        /* Pequeño efecto de desplazamiento */
+               background-color: #fce7f3; 
+               color: #db2777;            
+               padding-left: 16px;        
+            }
+            
+            /* 2. CORREGIDO: Ahora apunta correctamente al enlace activo */
+            .admin-nav a.active {
+               background-color: #fce7f3; 
+               color: #db2777;            
+               font-weight: bold;
+               padding-left: 16px;        
             }
 
             .logout-btn {
@@ -87,7 +92,7 @@ export default function AdminLayout() {
                padding: 10px 15px;
                border-radius: 8px;
                cursor: pointer;
-               margin-top: auto; /* Sigue empujando el botón al fondo */
+               margin-top: auto; 
                font-weight: 500;
                transition: background 0.2s ease;
             }

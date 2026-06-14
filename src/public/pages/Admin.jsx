@@ -304,7 +304,7 @@ const Admin = () => {
                   </div>
                   
                   {/* columna derecha */}
-                  <div style={{ flex: '0 0 calc(40% - 10px)' }}>
+                  <div style={{ flex: '0 0 calc(40% - 10px)' , display: 'flex', flexDirection: 'column', gap: '20px' }}>
                      <div className="input-group">
                         <label>Fecha de Renta</label>
                         <input type="date" name="fechaRenta" value={ventasForm.fechaRenta} onChange={handleVentasChange} required />

@@ -313,11 +313,11 @@ const Inventario = () => {
                            <label>Talla</label>
                            <select	className="filtro-select" name="talla" value={form.talla} onChange={handleChange} required> 
                               <option value="">Selecciona una talla</option>
-                              <option value="1xl">1XL</option>
-                              <option value="2xl">2XL</option>
-                              <option value="3xl">3XL</option>
-                              <option value="4xl">4XL</option>
-                              <option value="5xl">5XL</option>
+                              <option value="1 xl">1 XL</option>
+                              <option value="2 xl">2 XL</option>
+                              <option value="3 xl">3 XL</option>
+                              <option value="4 xl">4 XL</option>
+                              <option value="5 xl">5 XL</option>
                            </select>
                         </div>
                         <div className="input-group">

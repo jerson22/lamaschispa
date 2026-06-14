@@ -1,6 +1,7 @@
 body {
    background-color: #f9a8d4;
    margin: 0;
+   font-family: "Poppins", sans-serif;
 }
 
 /* ===== NAVBAR ===== */
@@ -44,9 +45,9 @@ body {
 .nav-right a {
    text-decoration: none;
    color: #333;
-   font-size: 0.95rem;
+   /* font-size: 0.95rem; */
    font-family: "Poppins", sans-serif;
-   font-size: 1.875rem;
+   font-size: 1.2rem;
 
 }
 
@@ -300,6 +301,7 @@ body {
 
 .product-details p {
    margin: 2px 0;
+   font-family: "Poppins", sans-serif;
 }
 
 .product-footer {
@@ -663,7 +665,7 @@ body {
    }
 
    .nav-right a {
-      font-size: 1.5rem;
+      font-size: 1.0rem;
    }
 
    .vestidos-grid {

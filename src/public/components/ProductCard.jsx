@@ -21,6 +21,10 @@ export default function ProductCard({ product }) {
    };
 
    const isAccessory = typeof window !== 'undefined' && window.location.pathname.includes('accesorio');
+   const mayus = (texto) => {
+      if (!texto) return '';
+      return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+   };
 
    return (
       <div className="product-card">
@@ -70,8 +74,8 @@ export default function ProductCard({ product }) {
                
                {/* DETALLES (Izquierda) */}
                <div className="product-details" style={{ flex: '1' }}>
-                  {product.color && <p style={{ margin: '2px 0' }}><strong>Color:</strong> {product.color}</p>}
-                  {product.talla && <p style={{ margin: '2px 0' }}><strong>Talla:</strong> {product.talla}</p>}
+                  {product.color && <p style={{ margin: '2px 0' }}><strong>Color:</strong> {mayus(product.color)}</p>}
+                  {product.talla && <p style={{ margin: '2px 0' }}><strong>Talla:</strong> {product.talla.toUpperCase()}</p>}
                </div>
                
                {/* BOTÓN (Derecha - Corregido con marginRight) */}
