@@ -45,7 +45,7 @@ body {
    text-decoration: none;
    color: #333;
    font-size: 0.95rem;
-   font-family: "Caveat", cursive;
+   font-family: "Poppins", sans-serif;
    font-size: 1.875rem;
 
 }
@@ -90,7 +90,7 @@ body {
 
 .page-title {
    text-align: center;
-   font-family: "Caveat", cursive;
+   font-family: "Poppins", sans-serif;
    font-size: 3rem;
    color: #333;
    margin-bottom: 40px;
@@ -114,7 +114,7 @@ body {
    padding: 10px 15px;
    border: 1px solid #e5e7eb;
    border-radius: 10px;
-   font-family: "Outfit", sans-serif;
+   font-family: "Poppins", sans-serif;
    font-size: 1rem;
    outline: none;
    transition: border-color 0.2s;
@@ -128,7 +128,7 @@ body {
    padding: 10px 15px;
    border: 1px solid #e5e7eb;
    border-radius: 10px;
-   font-family: "Outfit", sans-serif;
+   font-family: "Poppins", sans-serif;
    font-size: 1rem;
    outline: none;
    background-color: white;
@@ -289,7 +289,7 @@ body {
    font-size: 1.4rem;
    /* text-align: center; */
    color: #1f2937;
-   font-family: "Outfit", sans-serif;
+   font-family: "Poppins", sans-serif;
 }
 
 .product-details {
@@ -377,7 +377,7 @@ body {
 }
 
 .home-container h1 {
-   font-family: 'Caveat', cursive;
+   font-family: "Poppins", sans-serif;
    font-size: 2.5rem;
    color: #333;
    margin-bottom: 20px;
@@ -385,7 +385,7 @@ body {
 }
 
 .home-container p {
-   font-family: 'Caveat';
+   font-family:"Poppins", sans-serif;
    font-size: 1.5rem;
    color: #333;
    line-height: 1.6;
@@ -403,7 +403,7 @@ body {
    border: none;
    color: #db2777;
    font-size: 1.1rem;
-   font-family: "Outfit", sans-serif;
+   font-family: "Poppins", sans-serif;
    font-weight: 600;
    cursor: pointer;
    margin-bottom: 20px;
@@ -506,7 +506,7 @@ body {
 }
 
 .producto-detail-title {
-   font-family: "Outfit", sans-serif;
+   font-family: "Poppins", sans-serif;
    font-size: 2.5rem;
    color: #1f2937;
    margin: 0 0 25px 0;
@@ -552,7 +552,7 @@ body {
 }
 
 .producto-detail-description h3 {
-   font-family: "Outfit", sans-serif;
+   font-family: "Poppins", sans-serif;
    font-size: 1.2rem;
    color: #374151;
    margin-bottom: 10px;

@@ -44,11 +44,11 @@ app.post('/api/upload', verificarToken, esAdmin, upload.array('images', 10), (re
 
 // 1. CREAR un producto
 app.post('/api/productos', verificarToken, esAdmin, async (req, res) => {
-   const { name, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido, imagenes } = req.body;
+   const { name, precio_vestido, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido, imagenes } = req.body;
    try {
       await db.query('BEGIN');
-      const query = 'INSERT INTO productos (name, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *';
-      const values = [name, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido ? '1' : '0'];
+      const query = 'INSERT INTO productos (name, precio_vestido, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *';
+      const values = [name, precio_vestido, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido ? '1' : '0'];
       // console.log("Values:", values);
       const result = await db.query(query, values);
       const producto_id = result.rows[0].id;
@@ -74,11 +74,11 @@ app.post('/api/productos', verificarToken, esAdmin, async (req, res) => {
 // 2. ACTUALIZAR un producto
 app.put('/api/productos/:id', verificarToken, esAdmin, async (req, res) => {
    const { id } = req.params;
-   const { name, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido, imagenes } = req.body;
+   const { name, precio_vestido, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido, imagenes } = req.body;
    try {
       await db.query('BEGIN');
-      const query = 'UPDATE productos SET name=$1, precio_venta=$2, precio_renta=$3, color=$4, talla=$5, silueta=$6, mangas=$7, descripcion=$8, vestido=$9 WHERE id=$10 RETURNING *';
-      const values = [name, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido ? '1' : '0', id];
+      const query = 'UPDATE productos SET name=$1, precio_vestido=$2, precio_venta=$3, precio_renta=$4, color=$5, talla=$6, silueta=$7, mangas=$8, descripcion=$9, vestido=$10 WHERE id=$11 RETURNING *';
+      const values = [name, precio_vestido, precio_venta, precio_renta, color, talla, silueta, mangas, descripcion, vestido ? '1' : '0', id];
       // console.log("Values:", values);
       const result = await db.query(query, values);
 

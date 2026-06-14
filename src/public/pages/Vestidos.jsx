@@ -31,8 +31,8 @@ const Vestidos = () => {
       fetchVestidos();
    }, []);
 
-   const uniqueColors = [...new Set(vestidos.map(v => v.color).filter(Boolean))];
-   const uniqueTallas = [...new Set(vestidos.map(v => v.talla).filter(Boolean))];
+   const uniqueColors = [...new Set(vestidos.map(v => v.color).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+   const uniqueTallas = [...new Set(vestidos.map(v => v.talla).filter(Boolean))].sort((a, b) => parseInt(a) - parseInt(b));
    const uniqueSiluetas = [...new Set(vestidos.map(v => v.silueta).filter(Boolean))];
    const uniqueMangas = [...new Set(vestidos.map(v => v.mangas).filter(Boolean))];
 
@@ -52,6 +52,11 @@ const Vestidos = () => {
    if (loading) return <div className="loading">Cargando vestidos...</div>;
    if (error) return <div className="error">Error: {error}</div>;
 
+   const mayus = (texto) => {
+      if (!texto) return '';
+      return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+   };
+
    return (
       <div className="vestidos-container">
          <h1 className="page-title">Galería de Vestidos</h1>
@@ -68,28 +73,28 @@ const Vestidos = () => {
             <select className="filtro-select" value={selectedTalla} onChange={(e) => setSelectedTalla(e.target.value)}>
                <option value="">Todas las Tallas</option>
                {uniqueTallas.map(talla => (
-                  <option key={talla} value={talla}>{talla}</option>
+                  <option key={talla} value={talla}>{talla.toUpperCase()}</option>
                ))}
             </select>
 
             <select className="filtro-select" value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)}>
                <option value="">Todos los Colores</option>
                {uniqueColors.map(color => (
-                  <option key={color} value={color}>{color}</option>
+                  <option key={color} value={color}>{mayus(color)}</option>
                ))}
             </select>
 
             <select className="filtro-select" value={selectedSilueta} onChange={(e) => setSelectedSilueta(e.target.value)}>
                <option value="">Todas las Siluetas</option>
                {uniqueSiluetas.map(silueta => (
-                  <option key={silueta} value={silueta}>{silueta}</option>
+                  <option key={silueta} value={silueta}>Corte {mayus(silueta)}</option>
                ))}
             </select>
 
             <select className="filtro-select" value={selectedMangas} onChange={(e) => setSelectedMangas(e.target.value)}>
                <option value="">Todas las Mangas</option>
                {uniqueMangas.map(mangas => (
-                  <option key={mangas} value={mangas}>{mangas}</option>
+                  <option key={mangas} value={mangas}>{mayus(mangas)}</option>
                ))}
             </select>
          </div>

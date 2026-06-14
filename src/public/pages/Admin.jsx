@@ -277,6 +277,7 @@ const Admin = () => {
                               <h4>{selectedProduct.name}</h4>
                               {/* <p><strong>ID Seleccionado:</strong> {selectedProduct.id}</p> */}
                               {selectedProduct.talla && <p><strong>Talla:</strong> {selectedProduct.talla}</p>}
+                              {selectedProduct.precio_vestido && <p><strong>Precio Vestido:</strong> ${selectedProduct.precio_vestido}</p>}
                               {selectedProduct.precio_renta && <p><strong>Precio Renta:</strong> ${selectedProduct.precio_renta}</p>}
                               {selectedProduct.precio_venta && <p><strong>Precio Venta:</strong> ${selectedProduct.precio_venta}</p>}
                            </div>
@@ -489,6 +490,24 @@ const Admin = () => {
                .admin-container { margin: 20px auto; padding: 10px; }
                .form-section { padding: 20px; }
                .save-btn { width: 100%; }
+            }
+               /* Modifica esta regla para excluir también los checkboxes */
+            .admin-form input:not([type="radio"]):not([type="checkbox"]), .admin-form textarea {
+               width: 100%;
+               padding: 10px;
+               border: 1px solid #ddd;
+               border-radius: 8px;
+               outline: none;
+               box-sizing: border-box;
+            }
+
+            /* Agrega esta nueva regla abajo para domar a Safari */
+            .admin-form input[type="checkbox"] {
+               width: auto;
+               max-width: 18px;
+               height: 18px;
+               margin: 0;
+               cursor: pointer;
             }
          `}</style>
       </div>

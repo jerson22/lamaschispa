@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 
 const Inventario = () => {
    const [productos, setProductos] = useState([]);
-   const [clientes, setClientes] = useState([]);
    const [form, setForm] = useState({
       id: null,
       name: '',
       precio_venta: '',
       precio_renta: '',
+      precio_vestido: '',
       silueta: '',
       mangas: '',
       color: '',
@@ -17,27 +17,8 @@ const Inventario = () => {
       descripcion: '',
       vestido: true
    });
-   const [clientForm, setClientForm] = useState({
-      nombre: '',
-      telefono: '',
-      email: '',
-      municipio: ''
-   });
-   const [reserveForm, setReserveForm] = useState({
-      clienteId: '',
-      name: '',
-      productoId: '',
-      bolso: false,
-      aretes: false,
-      ajuste: false,
-      fechaAjustes: '',
-      fechaRenta: '',
-      fechaEntrega: '',
-      fechaDevolucion: '',
-      anticipo: '',
-      pendiente: '',
-      notas: '',
-   });
+
+ 
    const [loading, setLoading] = useState(true);
    const [uploading, setUploading] = useState(false);
    const [error, setError] = useState(null);
@@ -79,7 +60,6 @@ const Inventario = () => {
       // Validar que el token siga siendo válido en el servidor
       validateToken();
       fetchProductos();
-      fetchClientes();
    }, [token, navigate]);
 
    // Función para validar el token con el servidor
@@ -102,6 +82,7 @@ const Inventario = () => {
       }
    };
 
+   // Funcion para traer productos desde el servidor
    const fetchProductos = async () => {
       try {
          const response = await fetch('/api/productos');
@@ -124,32 +105,12 @@ const Inventario = () => {
       }
    };
 
-   const fetchClientes = async () => {
-      try {
-         const response = await fetch('/api/clientes', {
-            headers: { 'auth-token': token }
-         });
-         
-         if (handleAuthError(response)) return;
-         
-         if (!response.ok) {
-            console.error('Error fetching clientes:', response.status);
-            setClientes([]);
-            return;
-         }
-         
-         const data = await response.json();
-         setClientes(Array.isArray(data) ? data : []);
-      } catch (err) {
-         console.error('Error en fetchClientes:', err);
-         setClientes([]);
-      }
-   };
-
+   // Funcion para cambiar el formulario de producto
    const handleChange = (e) => {
       setForm({ ...form, [e.target.name]: e.target.value });
    };
 
+   // Funcion para enviar el formulario de producto (crear o actualizar)
    const handleSubmit = async (e) => {
       e.preventDefault();
       const method = form.id ? 'PUT' : 'POST';
@@ -169,7 +130,7 @@ const Inventario = () => {
 
          if (response.ok) {
             alert(form.id ? 'Producto actualizado' : 'Producto creado');
-            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', silueta:'', mangas:'', imagenes: [''], descripcion: '', vestido: true });
+            setForm({ id: null, name: '', precio_venta: '', precio_renta: '', precio_vestido: '', color: '', talla: '', silueta:'', mangas:'', imagenes: [''], descripcion: '', vestido: true });
             fetchProductos();
          } else {
             const data = await response.json();
@@ -180,6 +141,7 @@ const Inventario = () => {
       }
    };
 
+   // Funcion para cargar los datos de un producto en el formulario para editar
    const handleEdit = (v) => {
       setForm({
          ...v,
@@ -189,6 +151,7 @@ const Inventario = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
    };
 
+   // Funcion para eliminar un producto
    const handleDelete = async (id) => {
       if (!window.confirm('¿Seguro que quieres eliminar este producto?')) return;
 
@@ -210,16 +173,19 @@ const Inventario = () => {
       }
    };
 
+   // Funcion para manejar cambios en los campos de imagenes
    const handleImageChange = (index, value) => {
       const newImagenes = [...form.imagenes];
       newImagenes[index] = value;
       setForm({ ...form, imagenes: newImagenes });
    };
 
+   // Funcion para agregar un nuevo campo de imagen
    const addImageInput = () => {
       setForm({ ...form, imagenes: [...form.imagenes, ''] });
    };
 
+   // Funcion para eliminar un campo de imagen
    const removeImageInput = (index) => {
       if (form.imagenes.length > 1) {
          const newImagenes = form.imagenes.filter((_, i) => i !== index);
@@ -227,6 +193,7 @@ const Inventario = () => {
       }
    };
 
+   // Funcion para manejar la subida de archivos al servidor
    const handleFileUpload = async (e) => {
       const files = e.target.files;
       if (!files || files.length === 0) return;
@@ -257,123 +224,6 @@ const Inventario = () => {
       }
    };
 
-   const handleClientChange = (e) => {
-      setClientForm({ ...clientForm, [e.target.name]: e.target.value });
-   };
-
-   const handleClientSubmit = async (e) => {
-      e.preventDefault();
-      try {
-         const response = await fetch('/api/clientes', {
-            method: 'POST',
-            headers: {
-               'Content-Type': 'application/json',
-               'auth-token': token
-            },
-            body: JSON.stringify(clientForm)
-         });
-
-         if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'No se pudo crear el cliente');
-         }
-
-         const newClient = await response.json();
-         setClientes([...clientes, newClient]);
-         setClientForm({ nombre: '', telefono: '', email: '', municipio: '' });
-         alert('Cliente registrado correctamente');
-      } catch (err) {
-         alert(err.message);
-      }
-   };
-
-   const handleReserveChange = (e) => {
-      const { name, value, type, checked } = e.target;
-      setReserveForm({ 
-         ...reserveForm, 
-         [name]: type === 'checkbox' ? checked : value 
-      });
-   };
-
-   const handleReserveItemChange = (index, field, value) => {
-      const newItems = [...reserveForm.items];
-      newItems[index][field] = value;
-      setReserveForm({ ...reserveForm, items: newItems });
-   };
-
-   const addReserveItem = () => {
-      setReserveForm({
-         ...reserveForm,
-         items: [...reserveForm.items, { productoId: '', cantidad: 1, rol: 'vestido', estadoItem: 'pendiente', precioUnitario: '', notas: '' }]
-      });
-   };
-
-   const removeReserveItem = (index) => {
-      if (reserveForm.items.length === 1) return;
-      const newItems = reserveForm.items.filter((_, i) => i !== index);
-      setReserveForm({ ...reserveForm, items: newItems });
-   };
-
-   const handleReserveSubmit = async (e) => {
-      e.preventDefault();
-      try {
-         const body = {
-            clienteId: Number(reserveForm.clienteId),
-            name: reserveForm.name,
-            productoId: Number(reserveForm.productoId),
-            bolso: reserveForm.bolso,
-            aretes: reserveForm.aretes,
-            ajuste: reserveForm.ajuste,
-            fechaAjustes: reserveForm.fechaAjustes || null,
-            fechaRenta: reserveForm.fechaRenta,
-            fechaEntrega: reserveForm.fechaEntrega,
-            fechaDevolucion: reserveForm.fechaDevolucion,
-            anticipo: Number(reserveForm.anticipo),
-            pendiente: Number(reserveForm.pendiente),
-            notas: reserveForm.notas
-         };
-
-         const response = await fetch('/api/ventas', {
-            method: 'POST',
-            headers: {
-               'Content-Type': 'application/json',
-               'auth-token': token
-            },
-            body: JSON.stringify(body)
-         });
-
-         if (!response.ok) {
-            const text = await response.text();
-            try {
-               const data = JSON.parse(text);
-               throw new Error(data.error || 'No se pudo crear la venta');
-            } catch (parseErr) {
-               console.error('Error response:', text);
-               throw new Error('Error del servidor al crear la venta');
-            }
-         }
-
-         alert('Venta registrada correctamente');
-         setReserveForm({
-            clienteId: '',
-            name: '',
-            productoId: '',
-            bolso: false,
-            aretes: false,
-            ajuste: false,
-            fechaAjustes: '',
-            fechaRenta: '',
-            fechaEntrega: '',
-            fechaDevolucion: '',
-            anticipo: '',
-            pendiente: '',
-            notas: '',
-         });
-         alert('venta registrada correctamente');
-      } catch (err) {
-         alert(err.message);
-      }
-   };
 
    const logout = () => {
       localStorage.clear();
@@ -395,7 +245,7 @@ const Inventario = () => {
 
    return (
       <div className="admin-container">
-
+         {/* HEADER DEL PANEL */}
          <section className="form-section">
             <h2>{form.id ? 'Editar Producto' : 'Subir Nuevo Producto'}</h2>
             <form onSubmit={handleSubmit} className="admin-form">
@@ -428,6 +278,10 @@ const Inventario = () => {
                      <input name="name" value={form.name} onChange={handleChange} required />
                   </div>
                   <div className="input-group">
+                     <label>Precio Vestido</label>
+                     <input type="number" name="precio_vestido" value={form.precio_vestido} onChange={handleChange} required />
+                  </div>
+                  <div className="input-group">
                      <label>Precio Venta</label>
                      <input type="number" name="precio_venta" value={form.precio_venta} onChange={handleChange} required />
                   </div>
@@ -437,13 +291,34 @@ const Inventario = () => {
                   </div>
                   <div className="input-group">
                      <label>Color</label>
-                     <input name="color" value={form.color} onChange={handleChange} required />
+                     <select className="filtro-select" name="color" value={form.color} onChange={handleChange} required>
+                        <option value="">Selecciona un color</option>
+                        <option value="rosa">Rosa</option>
+                        <option value="rojo">Rojo</option>
+                        <option value="azul">Azul</option>
+                        <option value="verde">Verde</option>
+                        <option value="negro">Negro</option>
+                        <option value="beige">Beige</option>
+                        <option value="naranja">Naranja</option>
+                        <option value="gris">Gris</option>
+                        <option value="floreal">Floreal</option>
+                        <option value="cafe">Café</option>
+                        <option value="amarillo">Amarillo</option>
+                        <option value="dorado/plateado">Dorado/Plateado</option>
+                     </select>
                   </div>
                   {form.vestido && (
                      <>
                         <div className="input-group">
                            <label>Talla</label>
-                           <input name="talla" value={form.talla} onChange={handleChange} required />
+                           <select	className="filtro-select" name="talla" value={form.talla} onChange={handleChange} required> 
+                              <option value="">Selecciona una talla</option>
+                              <option value="1xl">1XL</option>
+                              <option value="2xl">2XL</option>
+                              <option value="3xl">3XL</option>
+                              <option value="4xl">4XL</option>
+                              <option value="5xl">5XL</option>
+                           </select>
                         </div>
                         <div className="input-group">
                            <label>Silueta</label>
@@ -461,7 +336,7 @@ const Inventario = () => {
                               <option value="mangas">Mangas</option>
                               <option value="mangas caidas">Mangas Caidas</option>
                               <option value="strapless">Strapless</option>
-                              <option value="tirante">tirante</option>
+                              <option value="tirante">Tirante</option>
                            </select>
                         </div>
                      </>
@@ -511,11 +386,12 @@ const Inventario = () => {
                </div>
                <div className="form-actions">
                   <button type="submit" className="save-btn">{form.id ? 'Guardar Cambios' : 'Publicar Producto'}</button>
-                  {form.id && <button type="button" onClick={() => setForm({ id: null, name: '', precio_venta: '', precio_renta: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true })} className="cancel-btn">Cancelar</button>}
+                  {form.id && <button type="button" onClick={() => setForm({ id: null, name: '', precio_venta: '', precio_renta: '', precio_vestido: '', color: '', talla: '', imagenes: [''], descripcion: '', vestido: true })} className="cancel-btn">Cancelar</button>}
                </div>
             </form>
          </section>
 
+         {/* SECCIÓN DE LISTADO DE PRODUCTOS */}
          <section className="list-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
                <h2 style={{ margin: 0 }}>Gestión de Inventario</h2>
@@ -534,6 +410,7 @@ const Inventario = () => {
                         <th>ID</th>
                         <th>Nombre</th>
                         <th>Tipo</th>
+                        <th>Vestido</th>
                         <th>Venta</th>
                         <th>Renta</th>
                         <th>Talla</th>
@@ -547,6 +424,7 @@ const Inventario = () => {
                            <td>{p.id}</td>
                            <td>{p.name}</td>
                            <td>{(p.vestido === '1' || p.vestido === true || p.vestido === 1) ? 'Vestido' : 'Accesorio'}</td>
+                           <td>${p.precio_vestido}</td>
                            <td>${p.precio_venta}</td>
                            <td>${p.precio_renta}</td>
                            <td>{p.talla || '-'}</td>
