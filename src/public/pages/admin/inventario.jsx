@@ -160,7 +160,7 @@ const Inventario = () => {
             method: 'DELETE',
             headers: { 'auth-token': token }
          });
-         console.log('se mando el Delete');
+         
          if (handleAuthError(response)) return;
 
          if (response.ok) {
@@ -301,6 +301,7 @@ const Inventario = () => {
                         <option value="beige">Beige</option>
                         <option value="naranja">Naranja</option>
                         <option value="gris">Gris</option>
+                        <option value="morado">Morado</option>
                         <option value="floreal">Floreal</option>
                         <option value="cafe">Café</option>
                         <option value="amarillo">Amarillo</option>
@@ -336,7 +337,8 @@ const Inventario = () => {
                               <option value="mangas">Mangas</option>
                               <option value="mangas caidas">Mangas Caidas</option>
                               <option value="strapless">Strapless</option>
-                              <option value="tirante">Tirante</option>
+                              <option value="tirantes">Tirantes</option>
+                              <option value="un tirante">Un Tirante</option>
                            </select>
                         </div>
                      </>
