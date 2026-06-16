@@ -302,7 +302,7 @@ const Inventario = () => {
                         <option value="naranja">Naranja</option>
                         <option value="gris">Gris</option>
                         <option value="morado">Morado</option>
-                        <option value="floreal">Floreal</option>
+                        <option value="floreado/estampados">Floreado Estampados</option>
                         <option value="cafe">Café</option>
                         <option value="amarillo">Amarillo</option>
                         <option value="dorado/plateado">Dorado/Plateado</option>
@@ -339,6 +339,8 @@ const Inventario = () => {
                               <option value="strapless">Strapless</option>
                               <option value="tirantes">Tirantes</option>
                               <option value="un tirante">Un Tirante</option>
+                              <option value="halter">Halter</option>
+                              <option value="capa">Capa</option>
                            </select>
                         </div>
                      </>

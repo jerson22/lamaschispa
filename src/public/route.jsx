@@ -14,6 +14,7 @@ import Admin from "./pages/Admin"
 import NewClient from "./pages/admin/newClient"
 import Inventario from "./pages/admin/inventario"
 import RentasAdmin from "./pages/admin/rentas"
+import Renta from "./pages/admin/renta"
 
 export default function App() {
    return (
@@ -36,6 +37,7 @@ export default function App() {
                   <Route path="nuevo-cliente" element={<NewClient />} />
                   <Route path="inventario" element={<Inventario />} />
                   <Route path="rentas" element={<RentasAdmin />} />
+                  <Route path="renta/:id" element={<Renta />} />
                   {/* Si mañana creas /admin/inventario, también conservará ambas navbars:
                   <Route path="inventario" element={<Inventario />} /> */}
                </Route>

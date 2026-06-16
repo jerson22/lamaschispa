@@ -20,6 +20,7 @@ const Admin = () => {
       pendienteTarjeta: '',
       liquidado: false,
       notas: '',
+      telefono: '',
    });
    const [loading, setLoading] = useState(true);
    const [uploading, setUploading] = useState(false);
@@ -143,7 +144,8 @@ const Admin = () => {
             anticipoTarjeta: Number(ventasForm.anticipoTarjeta),
             pendienteTarjeta: Number(ventasForm.pendienteTarjeta),
             liquidado: ventasForm.liquidado,
-            notas: ventasForm.notas
+            notas: ventasForm.notas,
+            telefono: ventasForm.telefono
          };
 
          const response = await fetch('/api/ventas', {
@@ -182,6 +184,7 @@ const Admin = () => {
             pendienteTarjeta: '',
             liquidado: false,
             notas: '',
+            telefono: '',
          });
          
          // Limpiar estados extras del buscador
@@ -218,6 +221,10 @@ const Admin = () => {
                      <div className="input-group">
                         <label>Cliente</label>
                         <input type="text" name="name" value={ventasForm.name} onChange={handleVentasChange} required />
+                     </div>
+                     <div className="input-group">
+                        <label> Teléfono</label>
+                        <input type="text" name="telefono" value={ventasForm.telefono} onChange={handleVentasChange} required />
                      </div>
                      
                      {/* NUEVO INPUT DE PRODUCTO INTERACTIVO */}

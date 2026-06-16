@@ -172,6 +172,22 @@ app.get('/api/productos/:id', async (req, res) => {
    }
 });
 
+// Endpoint para obtener una renta por ID
+app.get('/api/renta/:id', verificarToken, esAdmin, async (req, res) => {
+   const { id } = req.params;
+   try {
+      const result = await db.query('SELECT * FROM ventas WHERE id = $1', [id]);
+
+      if (result.rows.length === 0) {
+         return res.status(404).json({ error: "Renta no encontrada" });
+      }
+      res.json(result.rows[0]);
+   } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al obtener la renta' });
+   }
+});
+
 app.get('/api/clientes', verificarToken, esAdmin, async (req, res) => {
    try {
       const result = await db.query('SELECT * FROM clientes ORDER BY id ASC');
@@ -199,7 +215,7 @@ app.post('/api/clientes', verificarToken, esAdmin, async (req, res) => {
 // insertar ventas
 app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
    console.log("Datos recibidos para venta:", req.body);
-   const { name, productId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, liquidado, notas } = req.body;
+   const { name, productId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, liquidado, notas, telefono } = req.body;
    if (!name || !fechaRenta || !fechaEntrega || !fechaDevolucion || anticipoEfectivo === undefined && anticipoTarjeta === undefined) {
       return res.status(400).json({ error: 'Datos incompletos para crear la venta' });
    }
@@ -207,8 +223,8 @@ app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
       const isTrue = (val) => val === true || val === 1 || val === '1';
       const estado = isTrue(ajuste) ? 'cita de ajustes' : 'planchado';
       const ventasResult = await db.query(
-         'INSERT INTO ventas ( "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipoEfectivo", "anticipoTarjeta", "pendienteEfectivo", "pendienteTarjeta", "liquidado", "notas") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *',
-         [ name, productId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, isTrue(liquidado) ? '1' : '0', notas]
+         'INSERT INTO ventas ( "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipoEfectivo", "anticipoTarjeta", "pendienteEfectivo", "pendienteTarjeta", "liquidado", "notas", "telefono") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *',
+         [ name, productId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, isTrue(liquidado) ? '1' : '0', notas, telefono]
       );
       const reservaId = ventasResult.rows[0].id;
 

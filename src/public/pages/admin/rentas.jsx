@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { MdEdit, MdDelete } from "react-icons/md";
+import { useNavigate } from 'react-router-dom';
 
 export default function Rentas() {
    const [rentas, setRentas] = useState([]);
+   const navigate = useNavigate();
 
    useEffect(() => {
       const token = localStorage.getItem('token');
@@ -91,6 +93,7 @@ export default function Rentas() {
                <tr>
                   <th>ID</th>
                   <th>Nombre</th>
+                  <th>Teléfono</th>
                   <th>Fecha de Entrega</th>
                   <th>Estado</th>
                   <th>Fecha de Devolución</th>
@@ -102,6 +105,7 @@ export default function Rentas() {
                   <tr key={renta.id}>
                      <td>{renta.id}</td>
                      <td>{renta.name}</td>
+                     <td>{renta.telefono}</td>
                      <td>{renta.fechaEntrega ? new Date(renta.fechaEntrega).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
                      <td>
 								<select 
@@ -121,7 +125,7 @@ export default function Rentas() {
                      <td>{renta.fechaDevolucion ? new Date(renta.fechaDevolucion).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
                      <td>
                         <div className="acciones-container">
-                        	<button className="btn-neumorphic edit-btn">
+                        	<button className="btn-neumorphic edit-btn" onClick={() => navigate(`/admin/renta/${renta.id}`)}>
                            	<MdEdit />
 									</button>
                         	<button className="btn-neumorphic delete-btn" onClick={() => handleDelete(renta.id)}>
