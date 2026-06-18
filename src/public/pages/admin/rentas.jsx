@@ -4,27 +4,42 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Rentas() {
    const [rentas, setRentas] = useState([]);
+   const [productos, setProductos] = useState([]);
    const navigate = useNavigate();
+
+   const [filtros, setFiltros] = useState({
+      tipoFecha: 'todas',        
+      preset: 'todos',          
+      fechaInicio: '',          
+      fechaFin: ''              
+   });
 
    useEffect(() => {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const fetchRentas = async () => {
+      
+      const fetchData = async () => {
          try {
-            const response = await fetch('/api/rentas', {
+            const responseRentas = await fetch('/api/rentas', {
                headers: { 'auth-token': token }
             });
-            const data = await response.json();
-            console.log('Rentas obtenidas:', data);
-            setRentas(data);
+            const dataRentas = await responseRentas.json();
+            setRentas(dataRentas);
+
+            const responseProductos = await fetch('/api/productos', {
+               headers: { 'auth-token': token }
+            });
+            const dataProductos = await responseProductos.json();
+            setProductos(dataProductos);
+            
          } catch (error) {
-            console.error('Error fetching rentas:', error);
+            console.error('Error fetching data:', error);
          }
       };
 
-      fetchRentas();
+      fetchData();
    }, []);
-	{/* Opciones para formatear la fecha en español */}
+
    const opciones = {
       weekday: 'long',
       day: 'numeric',
@@ -32,66 +47,186 @@ export default function Rentas() {
       year: 'numeric',
       timeZone: 'UTC'
    };
-	const handleEstadoChange = async (rentaId, nuevoEstado) => {
-   	const token = localStorage.getItem('token');
-		if (!token) return;
 
-		try {
-			// Hacemos la petición PUT o PATCH a tu backend
-			const response = await fetch(`/api/rentas/${rentaId}`, {
-				method: 'PUT', 
-				headers: { 
-					'Content-Type': 'application/json',
-					'auth-token': token 
-				},
-				body: JSON.stringify({ estado: nuevoEstado })
-			});
-			if (response.ok) {
-				// Si el backend respondió bien, actualizamos el estado de React
-				setRentas(prevRentas => 
-					prevRentas.map(renta => 
-						renta.id === rentaId ? { ...renta, estado: nuevoEstado } : renta
-					)
-				);
-				console.log(`Renta ${rentaId} actualizada a: ${nuevoEstado}`);
-				alert(`Renta ${rentaId} actualizada a: ${nuevoEstado}`);
-			} else {
-				console.error('Error al actualizar en el servidor');
-			}
-		} catch (error) {
-			console.error('Error en la conexión:', error);
-		}
-	};
-	const handleDelete = async (rentaId) => {
-		const token = localStorage.getItem('token');
-		if (!token) return;
-		if (!window.confirm('¿Estás seguro de que quieres eliminar esta renta?')) return;
+   const obtenerRentasFiltradas = () => {
+      if (!Array.isArray(rentas)) return [];
 
-		try {
-			const response = await fetch(`/api/rentas/${rentaId}`, {
-				method: 'DELETE',
-				headers: { 'auth-token': token }
-			});
-			if (response.ok) {
-				// Si el backend respondió bien, actualizamos el estado de React
-				setRentas(prevRentas => prevRentas.filter(renta => renta.id !== rentaId));
-				console.log(`Renta ${rentaId} eliminada`);
-				alert(`Renta ${rentaId} eliminada`);
-			} else {
-				console.error('Error al eliminar en el servidor');
-			}
-		} catch (error) {
-			console.error('Error en la conexión:', error);
-		}
-	};
+      const filtradas = rentas.filter((renta) => {
+         if (filtros.preset === 'todos') return true;
+
+         const verificarFechaIndividual = (fechaString) => {
+            if (!fechaString) return false;
+
+            const fechaRenta = new Date(fechaString);
+            const hoy = new Date();
+
+            const stringRenta = fechaRenta.toISOString().split('T')[0];
+            const stringHoy = hoy.toISOString().split('T')[0];
+
+            if (filtros.preset === 'hoy') {
+               return stringRenta === stringHoy;
+            }
+
+            if (filtros.preset === 'semana') {
+               const tempHoy = new Date();
+               tempHoy.setHours(0, 0, 0, 0);
+               
+               const diaSemana = tempHoy.getDay();
+               const diferenciaLunes = tempHoy.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1); 
+               const lunes = new Date(tempHoy.setDate(diferenciaLunes));
+               
+               const domingo = new Date(lunes);
+               domingo.setDate(lunes.getDate() + 6);
+               domingo.setHours(23, 59, 59, 999);
+
+               const fRentaComparar = new Date(fechaString);
+               return fRentaComparar >= lunes && fRentaComparar <= domingo;
+            }
+
+            if (filtros.preset === 'personalizado') {
+               if (!filtros.fechaInicio || !filtros.fechaFin) return true;
+
+               const inicio = new Date(filtros.fechaInicio);
+               inicio.setHours(0, 0, 0, 0);
+
+               const fin = new Date(filtros.fechaFin);
+               fin.setHours(23, 59, 59, 999);
+
+               const fRentaComparar = new Date(fechaString);
+               return fRentaComparar >= inicio && fRentaComparar <= fin;
+            }
+
+            return false;
+         };
+
+         if (filtros.tipoFecha === 'todas') {
+            return (
+               verificarFechaIndividual(renta.fechaEntrega) ||
+               verificarFechaIndividual(renta.fechaDevolucion) ||
+               verificarFechaIndividual(renta.fechaAjuste)
+            );
+         }
+
+         return verificarFechaIndividual(renta[filtros.tipoFecha]);
+      });
+
+      return filtradas.sort((a, b) => {
+         if (!a.fechaEntrega) return 1;  
+         if (!b.fechaEntrega) return -1;
+         return new Date(a.fechaEntrega) - new Date(b.fechaEntrega);
+      });
+   };
+
+   const rentasFiltradas = obtenerRentasFiltradas();
+
+   const handleEstadoChange = async (rentaId, nuevoEstado) => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+         const response = await fetch(`/api/rentas/${rentaId}`, {
+            method: 'PUT', 
+            headers: { 
+               'Content-Type': 'application/json',
+               'auth-token': token 
+            },
+            body: JSON.stringify({ estado: nuevoEstado })
+         });
+         if (response.ok) {
+            setRentas(prevRentas => 
+               prevRentas.map(renta => 
+                  renta.id === rentaId ? { ...renta, estado: nuevoEstado } : renta
+               )
+            );
+            alert(`Renta ${rentaId} actualizada a: ${nuevoEstado}`);
+         }
+      } catch (error) {
+         console.error('Error en la conexión:', error);
+      }
+   };
+
+   const handleDelete = async (rentaId) => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      if (!window.confirm('¿Estás seguro de que quieres eliminar esta renta?')) return;
+
+      try {
+         const response = await fetch(`/api/rentas/${rentaId}`, {
+            method: 'DELETE',
+            headers: { 'auth-token': token }
+         });
+         if (response.ok) {
+            setRentas(prevRentas => prevRentas.filter(renta => renta.id !== rentaId));
+            alert(`Renta ${rentaId} eliminada`);
+         }
+      } catch (error) {
+         console.error('Error en la conexión:', error);
+      }
+   };
+
    return (
       <div className="rentas-container">
          <h1>Rentas</h1>
-         <p>{rentas.length} rentas encontradas</p>
+         <p>{rentasFiltradas.length} rentas encontradas</p>
+
+         <div className="filtros-container-bar">
+            <div className="filtro-grupo">
+               <label>¿Qué fecha revisar?</label>
+               <select 
+                  className="select-estado-neumorphic"
+                  value={filtros.tipoFecha}
+                  onChange={(e) => setFiltros({ ...filtros, tipoFecha: e.target.value })}
+               >
+                  <option value="todas">Todas las fechas (Cualquiera)</option>
+                  <option value="fechaEntrega">Fecha de Entrega</option>
+                  <option value="fechaDevolucion">Fecha de Devolución</option>
+                  <option value="fechaAjuste">Fecha de Ajuste</option>
+               </select>
+            </div>
+
+            <div className="filtro-grupo">
+               <label>Rango de Tiempo</label>
+               <select 
+                  className="select-estado-neumorphic"
+                  value={filtros.preset}
+                  onChange={(e) => setFiltros({ ...filtros, preset: e.target.value })}
+               >
+                  <option value="todos">Ver Todas</option>
+                  <option value="hoy">Hoy</option>
+                  <option value="semana">Esta Semana</option>
+                  <option value="personalizado">Rango Personalizado 📅</option>
+               </select>
+            </div>
+
+            {filtros.preset === 'personalizado' && (
+               <div className="filtro-grupo-fechas">
+                  <div>
+                     <label>Desde:</label>
+                     <input 
+                        type="date" 
+                        className="select-estado-neumorphic input-fecha"
+                        value={filtros.fechaInicio}
+                        onChange={(e) => setFiltros({ ...filtros, fechaInicio: e.target.value })}
+                     />
+                  </div>
+                  <div>
+                     <label>Hasta:</label>
+                     <input 
+                        type="date" 
+                        className="select-estado-neumorphic input-fecha"
+                        value={filtros.fechaFin}
+                        onChange={(e) => setFiltros({ ...filtros, fechaFin: e.target.value })}
+                     />
+                  </div>
+               </div>
+            )}
+         </div>
+
          <table className="rentas-table">
             <thead>
                <tr>
                   <th>ID</th>
+                  <th style={{ textAlign: 'center' }}>Liquidado</th> 
                   <th>Nombre</th>
                   <th>Teléfono</th>
                   <th>Fecha de Entrega</th>
@@ -101,72 +236,440 @@ export default function Rentas() {
                </tr>
             </thead>
             <tbody>
-               {Array.isArray(rentas) && rentas.map((renta) => (
-                  <tr key={renta.id}>
-                     <td>{renta.id}</td>
-                     <td>{renta.name}</td>
-                     <td>{renta.telefono}</td>
-                     <td>{renta.fechaEntrega ? new Date(renta.fechaEntrega).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
-                     <td>
-								<select 
-									className="select-estado-neumorphic"
-									value={renta.estado} 
-									onChange={(e) => handleEstadoChange(renta.id, e.target.value)}
-								>
-									<option value="cita de ajustes">Cita de Ajustes</option>
-									<option value="ajustes">Ajustes</option>
-									<option value="planchado">Planchado</option>
-									<option value="entregado">Entregado</option>
-									<option value="devolucion">Devolucion</option>
-									<option value="tintoreria">Tintorería</option>
-									<option value="en tienda">En tienda</option>
-								</select>
-							</td>
-                     <td>{renta.fechaDevolucion ? new Date(renta.fechaDevolucion).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
-                     <td>
-                        <div className="acciones-container">
-                        	<button className="btn-neumorphic edit-btn" onClick={() => navigate(`/admin/renta/${renta.id}`)}>
-                           	<MdEdit />
-									</button>
-                        	<button className="btn-neumorphic delete-btn" onClick={() => handleDelete(renta.id)}>
-                           	<MdDelete />
-                        	</button>
-								</div>
-                     </td>
-                  </tr>
-               ))}
+               {Array.isArray(rentasFiltradas) && rentasFiltradas.map((renta, index) => {
+                  
+                  const vestidoEncontrado = productos.find(p => p.id === renta.productId);
+                  const nombreVestido = vestidoEncontrado ? vestidoEncontrado.name : 'No especificado / Cargando...';
+                  const precioDeRenta = vestidoEncontrado ? Number(vestidoEncontrado.precio_renta || 0) : 0;
+
+                  const totalAnticipos = Number(renta.anticipoEfectivo || 0) + Number(renta.anticipoTarjeta || 0);
+                  const faltaPorPagarCalculado = precioDeRenta - totalAnticipos;
+
+                  const esLiquidado = renta.liquidado === true || renta.liquidado === 1 || renta.liquidado === '1' || renta.liquidado === 'true';
+                  const tieneAjuste = renta.ajuste === true || renta.ajuste === 1 || renta.ajuste === '1' || renta.ajuste === 'true';
+                  const tieneNotas = renta.notes || renta.notas;
+
+                  const mostrarHaciaArriba = index >= 1;
+
+                  return (
+                     <tr key={renta.id}>
+                        <td className="id-cell-tooltip">
+                           <span className="id-number">{renta.id}</span>
+                           
+                           <div className={`tooltip-box ${mostrarHaciaArriba ? 'up' : ''}`}>
+                              <h4>Resumen de Renta {renta.id}</h4>
+                              
+                              <div className="tooltip-content-grid">
+                                 {/* Columna 1: Ajustes de Costura */}
+                                 <div className="tooltip-col">
+                                    <p className="tooltip-seccion-titulo">📏 Ajustes de Costura</p>
+                                    
+                                    {/* Mantiene la condición AND segura solicitada anteriormente */}
+                                    {tieneAjuste && renta.fechaAjuste && (
+                                       <p className="tooltip-fecha-ajuste-top">
+                                          📅 <strong>Cita de ajuste:</strong> {new Date(renta.fechaAjuste).toLocaleDateString('es-ES', {day: 'numeric', month: 'short'})}
+                                       </p>
+                                    )}
+
+                                    {tieneAjuste ? (
+                                       <div className="tooltip-grid">
+                                          <p><strong>Bastilla:</strong> {renta.bastilla || '—'}</p>
+                                          <p><strong>Busto:</strong> {renta.busto || '—'}</p>
+                                          <p><strong>Tirantes:</strong> {renta.tirantes || '—'}</p>
+                                          <p><strong>Manga/P:</strong> {renta.mangaPuno || '—'}</p>
+                                          <p><strong>Cintura:</strong> {renta.cintura || '—'}</p>
+                                          <p><strong>Espalda:</strong> {renta.espalda || '—'}</p>
+                                       </div>
+                                    ) : (
+                                       <p className="no-ajustes-text">❌ Sin modificaciones de costura.</p>
+                                    )}
+                                 </div>
+
+                                 {/* Columna 2: Vestido y Finanzas Dinámicas */}
+                                 <div className="tooltip-col">
+                                    <p className="tooltip-seccion-titulo">Vestido</p>
+                                    <p className="tooltip-vestido-nombre">✨ {nombreVestido}</p>
+
+                                    <p className="tooltip-seccion-titulo">💰 Finanzas y Cuenta</p>
+                                    <div className="tooltip-finanzas-box">
+                                       <p><strong>Precio Renta:</strong> ${precioDeRenta}</p> 
+                                       <p style={{ marginTop: '4px' }}><strong>Anticipo Total:</strong> ${totalAnticipos}</p>
+                                       <span className="tooltip-finanzas-desglose">
+                                          (Efec: ${renta.anticipoEfectivo || 0} | Tarj: ${renta.anticipoTarjeta || 0})
+                                       </span>
+                                       <div className="tooltip-restante-row">
+                                          <strong>Falta por pagar:</strong> 
+                                          <span className="restante-monto">${faltaPorPagarCalculado}</span>
+                                       </div>
+                                    </div>
+                                 </div>
+
+                                 {/* Columna 3: Complementos y Notas Generales */}
+                                 <div className="tooltip-col">
+                                    <p className="tooltip-seccion-titulo">👜 Complementos</p>
+                                    <div className="tooltip-grid-mini" style={{ marginBottom: tieneNotas ? '14px' : '0' }}>
+                                       <p><strong>Bolso:</strong> {renta.bolso || '—'}</p>
+                                       <p><strong>Aretes:</strong> {renta.aretes || '—'}</p>
+                                    </div>
+
+                                    {tieneNotas ? (
+                                       <div className="tooltip-notas-container-inline">
+                                          <p className="tooltip-seccion-titulo">📝 Notas Generales</p>
+                                          <p className="notas-texto">{renta.notes || renta.notas}</p>
+                                       </div>
+                                    ) : null}
+                                 </div>
+                              </div>
+                           </div>
+                        </td>
+
+                        <td style={{ textAlign: 'center' }}>
+                           <span className={`icono-liquidado-neumorphic ${esLiquidado ? 'pagado' : 'pendiente'}`}>
+                              {esLiquidado ? '✔' : '✕'}
+                           </span>
+                        </td>
+
+                        <td>{renta.name}</td>
+                        <td>{renta.telefono}</td>
+                        <td>{renta.fechaEntrega ? new Date(renta.fechaEntrega).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
+                        
+                        {/* RESTAURADO: Volvió a la clase limpia original sin inyección de colores de fondo */}
+                        <td>
+                           <select 
+                              className="select-estado-neumorphic"
+                              value={renta.estado} 
+                              onChange={(e) => handleEstadoChange(renta.id, e.target.value)}
+                           >
+                              <option value="cita de ajustes">Cita de Ajustes</option>
+                              <option value="ajustes">Ajustes</option>
+                              <option value="planchado">Planchado</option>
+                              <option value="entregado">Entregado</option>
+                              <option value="devolucion">Devolucion</option>
+                              <option value="tintoreria">Tintorería</option>
+                              <option value="en tienda">En tienda</option>
+                           </select>
+                        </td>
+                        
+                        <td>{renta.fechaDevolucion ? new Date(renta.fechaDevolucion).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
+
+                        <td>
+                           <div className="acciones-container">
+                              <button className="btn-neumorphic edit-btn" onClick={() => navigate(`/admin/renta/${renta.id}`)}>
+                                 <MdEdit />
+                              </button>
+                              <button className="btn-neumorphic delete-btn" onClick={() => handleDelete(renta.id)}>
+                                 <MdDelete />
+                              </button>
+                           </div>
+                        </td>
+                     </tr>
+                  );
+               })}
             </tbody>
          </table>
+
          <style>{`
                .rentas-container {
-                  max-width: 1000px;
+                  max-width: 1150px; 
                   margin: 20px auto;
                   padding: 0 20px;
                }
+               
+               .filtros-container-bar {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 20px;
+                  align-items: flex-end;
+                  background-color: #fcfcfc;
+                  padding: 20px;
+                  border-radius: 16px;
+                  margin-bottom: 20px;
+                  box-shadow: 4px 4px 12px rgba(0,0,0,0.03);
+               }
+
+               .filtro-grupo {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+               }
+
+               .filtro-grupo label {
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  color: #6b7280;
+               }
+
+               .filtro-grupo-fechas {
+                  display: flex;
+                  gap: 15px;
+               }
+
+               .input-fecha {
+                  font-family: inherit;
+                  padding: 6px 12px;
+               }
+
                .rentas-table {
                   width: 100%;
-                  border-collapse: collapse;
-                  /* Cambiado a gris suave para que resalte el neumorfismo */
+                  border-collapse: separate; 
+                  border-spacing: 0;         
                   background-color: #fcfcfc; 
                   border-radius: 16px;
-                  overflow: hidden;
-                  padding: 10px;
+                  overflow: visible;         
+                  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
                }
+
                .rentas-table th,
                .rentas-table td {
                   padding: 16px;
                   text-align: left;
-                  border-bottom: 1px solid #d1d5db;
+                  border-bottom: 1px solid #e5e7eb;
+                  vertical-align: middle;
                }
-               .rentas-table th {
-                  /* Un gris un poco más oscuro para el encabezado */
-                  background-color: #eeecec; 
-                  font-weight: 600;
-						color: #374151;
-            
+
+               .rentas-table th:first-child {
+                  border-top-left-radius: 16px;
+               }
+               .rentas-table th:last-child {
+                  border-top-right-radius: 16px;
+               }
+
+               .rentas-table tr:last-child td {
+                  border-bottom: none;
                }
                
-               /* Estilos del botón Neumórfico */
+               .rentas-table tr:last-child td:first-child {
+                  border-bottom-left-radius: 16px;
+               }
+               .rentas-table tr:last-child td:last-child {
+                  border-bottom-right-radius: 16px;
+               }
+
+               .rentas-table th {
+                  background-color: #eeecec; 
+                  font-weight: 600;
+                  color: #374151;
+               }
+
+               /* TOOLTIP FLOTANTE CONSTANTE EN 3 COLUMNAS */
+               .id-cell-tooltip {
+                  position: relative; 
+                  cursor: pointer;       
+               }
+
+               .id-number {
+                  font-weight: bold;
+                  color: #db2777; 
+                  font-size: 1.05rem;
+               }
+
+               .tooltip-box {
+                  display: none;
+                  position: absolute;
+                  top: 100%; 
+                  left: 15px;
+                  background-color: #ffffff;
+                  color: #374151;
+                  padding: 16px;
+                  border-radius: 14px;
+                  width: 730px; 
+                  z-index: 999;
+                  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15), 
+                              0 4px 10px rgba(0, 0, 0, 0.04);
+                  border: 1px solid #e5e7eb;
+                  text-align: left;
+               }
+
+               .tooltip-box::before {
+                  content: "";
+                  position: absolute;
+                  bottom: 100%; 
+                  left: 20px;
+                  border-width: 8px;
+                  border-style: solid;
+                  border-color: transparent transparent #ffffff transparent;
+               }
+
+               .tooltip-box.up {
+                  top: auto;
+                  bottom: 100%; 
+                  margin-bottom: 12px;
+                  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.15), 
+                              0 -4px 10px rgba(0, 0, 0, 0.04);
+               }
+
+               .tooltip-box.up::before {
+                  bottom: auto;
+                  top: 100%; 
+                  border-color: #ffffff transparent transparent transparent;
+               }
+
+               .id-cell-tooltip:hover .tooltip-box {
+                  display: block;
+               }
+
+               .tooltip-box h4 {
+                  margin: 0 0 12px 0;
+                  color: #db2777; 
+                  font-size: 1.05rem;
+                  border-bottom: 2px solid #fce7f3;
+                  padding-bottom: 6px;
+               }
+
+               .tooltip-content-grid {
+                  display: grid;
+                  grid-template-columns: repeat(3, 1fr); 
+                  gap: 16px;
+               }
+
+               .tooltip-seccion-titulo {
+                  margin: 0 0 8px 0;
+                  font-size: 0.8rem;
+                  font-weight: bold;
+                  color: #4b5563;
+                  text-transform: uppercase;
+                  letter-spacing: 0.6px;
+               }
+
+               .tooltip-fecha-ajuste-top {
+                  margin: 0 0 8px 0;
+                  font-size: 0.82rem;
+                  color: #1f2937;
+                  background-color: #fff1f2;
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  display: inline-block;
+               }
+
+               .tooltip-vestido-nombre {
+                  margin: 0 0 12px 0;
+                  font-size: 0.9rem;
+                  font-weight: 600;
+                  color: #db2777;
+                  background: #fdf2f8;
+                  padding: 6px 10px;
+                  border-radius: 6px;
+               }
+
+               .tooltip-grid {
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr); 
+                  gap: 6px;
+                  font-size: 0.8rem;
+                  background-color: #f9fafb;
+                  padding: 10px;
+                  border-radius: 8px;
+               }
+
+               .tooltip-grid p { margin: 0; }
+
+               .tooltip-finanzas-box {
+                  background-color: #f0fdf4;
+                  padding: 10px;
+                  border-radius: 8px;
+                  font-size: 0.82rem;
+                  margin-bottom: 12px;
+                  border: 1px solid #dcfce7;
+               }
+               .tooltip-finanzas-box p { margin: 0; }
+               .tooltip-finanzas-desglose {
+                  font-size: 0.72rem;
+                  color: #166534;
+                  display: block;
+                  margin-bottom: 6px;
+               }
+               .tooltip-restante-row {
+                  border-top: 1px dashed #bbf7d0;
+                  padding-top: 6px;
+                  margin-top: 4px;
+                  display: flex;
+                  justify-content: space-between;
+               }
+               .restante-monto {
+                  color: #b91c1c;
+                  font-weight: bold;
+               }
+
+               .tooltip-grid-mini {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 6px;
+                  font-size: 0.8rem;
+                  background-color: #f9fafb;
+                  padding: 8px 10px;
+                  border-radius: 6px;
+               }
+               .tooltip-grid-mini p { margin: 0; }
+
+               .no-ajustes-text {
+                  margin: 0;
+                  font-size: 0.8rem;
+                  color: #9ca3af;
+                  background-color: #f9fafb;
+                  padding: 10px;
+                  border-radius: 8px;
+               }
+
+               .tooltip-notas-container-inline {
+                  display: flex;
+                  flex-direction: column;
+               }
+
+               .notas-texto {
+                  margin: 0;
+                  font-size: 0.8rem;
+                  background-color: #fffbeb; 
+                  color: #78350f;
+                  padding: 10px;
+                  border-radius: 6px;
+                  border-left: 3px solid #f59e0b;
+                  max-height: 110px; 
+                  overflow-y: auto;  
+               }
+
+               /* ICONO REDONDO LIQUIDADO */
+               .icono-liquidado-neumorphic {
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 50%;
+                  font-size: 0.85rem;
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: bold;
+                  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.15), 1px 1px 2px rgba(255,255,255,0.8);
+               }
+               .icono-liquidado-neumorphic.pagado {
+                  background-color: #e6f9ed;
+                  color: #166534;
+               }
+               .icono-liquidado-neumorphic.pendiente {
+                  background-color: #fee2e2;
+                  color: #991b1b;
+               }
+               
+               /* RESTAURADO: ESTILO ORIGINAL NEUMÓRFICO PARA EL SELECTOR DE ESTADOS */
+               .select-estado-neumorphic {
+                  border: none;
+                  outline: none;
+                  padding: 8px 12px;
+                  border-radius: 8px;
+                  background: #ffffff;
+                  color: #4b5563;
+                  font-weight: 500;
+                  cursor: pointer;
+                  box-shadow: inset 2px 2px 5px #bebebe, 
+                              inset -2px -2px 5px #ffffff;
+                  transition: all 0.3s ease;
+               }
+
+               .select-estado-neumorphic:focus {
+                  box-shadow: inset 1px 1px 3px #bebebe, 
+                              inset -1px -1px 3px #ffffff,
+                              0 0 4px rgba(59, 130, 246, 0.5); 
+               }
+               
+               /* Botones Neumórficos */
                .btn-neumorphic {
                   border: none;
                   outline: none;
@@ -176,66 +679,27 @@ export default function Rentas() {
                   justify-content: center;
                   width: 40px;
                   height: 40px;
-                  border-radius: 50%; /* Lo hace perfectamente redondo */
+                  border-radius: 50%;
                   color: #666;
                   font-size: 1.2rem;
-                  
-                  /* Fondo idéntico al de la tabla para lograr el efecto */
                   background: linear-gradient(145deg, #ffffff, #e2e2e2);
-                  
-                  /* Sombras proporcionales al tamaño del botón */
                   box-shadow: 2px 2px 8px #acacac, 
                               -2px -2px 8px #f1f1f1;
                   transition: all 0.2s ease;
                }
 
-               /* Efecto de hundido cuando el usuario hace clic */
                .btn-neumorphic:active {
                   background: #ffffff;
-                  box-shadow: inset 2px 2px 5px #d1d1d1;
+                  box-shadow: inset 2px 2px 5px #d1d1d1, 
                               inset -2px -2px 5px #ffffff;
                   color: #333;
                }
-					.acciones-container{
-						display: flex;
-						flex-direction: row;
-						gap: 10px;
-						algin-items: center;
-					}
-					// .edit-btn {
-					// 	color: #3b82f6;
-					// }
-					// .edit-btn:active {
-					// 	color: #1d4ed8;
-					// }
-					// .delete-btn {
-					// 	color: #ef4444;
-					// }
-					// .delete-btn:active {
-					// 	color: #dc2626;
-					// }
-					.select-estado-neumorphic {
-						border: none;
-						outline: none;
-						padding: 8px 12px;
-						border-radius: 8px;
-						background: #ffffff;
-						color: #4b5563;
-						font-weight: 500;
-						cursor: pointer;
-						
-						/* Efecto neumórfico hundido para que parezca un input/campo */
-						box-shadow: inset 2px 2px 5px #bebebe, 
-										inset -2px -2px 5px #ffffff;
-						transition: all 0.3s ease;
-					}
-
-					.select-estado-neumorphic:focus {
-						/* Resalta un poco al dar clic */
-						box-shadow: inset 1px 1px 3px #bebebe, 
-										inset -1px -1px 3px #ffffff,
-										0 0 4px rgba(59, 130, 246, 0.5); 
-					}
+               .acciones-container{
+                  display: flex;
+                  flex-direction: row;
+                  gap: 10px;
+                  align-items: center;
+               }
          `}</style>
       </div>
    );

@@ -71,7 +71,7 @@ export default function AdminLayout() {
          {/* CSS MEJORADO Y CORREGIDO */}
          <style>{`
             .aside-sidebar {
-               width: 220px; 
+               width: 180px; 
                background: #fff4fb; 
                color: #1f2937; 
                padding: 24px 16px;
