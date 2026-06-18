@@ -1,11 +1,51 @@
 import { Outlet, useNavigate, NavLink } from "react-router-dom"; // Limpiamos los imports duplicados
+import React, { useEffect } from 'react';
 
 export default function AdminLayout() {
-    const navigate = useNavigate();
-    const logout = () => {
-      localStorage.clear();
-      navigate('/');
-    };
+
+   const navigate = useNavigate();
+   const token = localStorage.getItem('token');
+
+   const clearSession = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+   };
+
+   const validateToken = async () => {
+      try {
+         const response = await fetch('/auth/validate', {
+            headers: { 'auth-token': token }
+         });
+
+         if (response.status === 401 || response.status === 403) {
+            clearSession();
+            return false;
+         }
+
+         return response.ok;
+      } catch (err) {
+         console.error('Error validating token:', err);
+         return false;
+      }
+   };
+
+   useEffect(() => {
+      const storedUser = localStorage.getItem('user');
+      let parsedUser = null;
+      try {
+         parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      } catch {
+         parsedUser = null;
+      }
+
+      if (!token || !parsedUser || parsedUser.rol !== 'admin') {
+         clearSession();
+         return;
+      }
+
+      validateToken();
+   }, [token, navigate]);
 
     return (
       <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -19,13 +59,13 @@ export default function AdminLayout() {
                <NavLink to="/admin/nuevo-cliente">Nuevo Cliente</NavLink>
                <NavLink to="/admin/inventario">Inventario</NavLink>
 
-               <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
+               <button onClick={clearSession} className="logout-btn">Cerrar Sesión</button>
             </nav>
          </aside>
 
          {/* CONTENEDOR DINÁMICO DEL ADMIN */}
          <main style={{ flex: 1, padding: "20px" }}>
-            <Outlet /> 
+            <Outlet context={{ token }} /> 
          </main>
 
          {/* CSS MEJORADO Y CORREGIDO */}

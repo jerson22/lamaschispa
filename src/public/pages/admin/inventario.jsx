@@ -302,7 +302,7 @@ const Inventario = () => {
                         <option value="naranja">Naranja</option>
                         <option value="gris">Gris</option>
                         <option value="morado">Morado</option>
-                        <option value="floreado/estampados">Floreado Estampados</option>
+                        <option value="floreado/estampados">Floreado/Estampados</option>
                         <option value="cafe">Café</option>
                         <option value="amarillo">Amarillo</option>
                         <option value="dorado/plateado">Dorado/Plateado</option>

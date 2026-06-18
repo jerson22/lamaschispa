@@ -175,12 +175,15 @@ app.get('/api/productos/:id', async (req, res) => {
 // Endpoint para obtener una renta por ID
 app.get('/api/renta/:id', verificarToken, esAdmin, async (req, res) => {
    const { id } = req.params;
+   console.log('El id recivido es: ', id);
    try {
       const result = await db.query('SELECT * FROM ventas WHERE id = $1', [id]);
 
       if (result.rows.length === 0) {
          return res.status(404).json({ error: "Renta no encontrada" });
       }
+      // console.log('Resultados enviados');
+      // console.log(result.rows[0]);
       res.json(result.rows[0]);
    } catch (error) {
       console.error(error);
@@ -215,7 +218,7 @@ app.post('/api/clientes', verificarToken, esAdmin, async (req, res) => {
 // insertar ventas
 app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
    console.log("Datos recibidos para venta:", req.body);
-   const { name, productId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, liquidado, notas, telefono } = req.body;
+   const { name, productId, bolso, aretes, ajuste, fechaAjustes, fechaRenta, fechaEntrega, fechaDevolucion, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, liquidado, notas, telefono, bastilla, busto, tirantes, mangaPuno, cintura, espalda} = req.body;
    if (!name || !fechaRenta || !fechaEntrega || !fechaDevolucion || anticipoEfectivo === undefined && anticipoTarjeta === undefined) {
       return res.status(400).json({ error: 'Datos incompletos para crear la venta' });
    }
@@ -223,8 +226,8 @@ app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
       const isTrue = (val) => val === true || val === 1 || val === '1';
       const estado = isTrue(ajuste) ? 'cita de ajustes' : 'planchado';
       const ventasResult = await db.query(
-         'INSERT INTO ventas ( "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipoEfectivo", "anticipoTarjeta", "pendienteEfectivo", "pendienteTarjeta", "liquidado", "notas", "telefono") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *',
-         [ name, productId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, isTrue(liquidado) ? '1' : '0', notas, telefono]
+         'INSERT INTO ventas ( "name", "productId", "bolso", "aretes", "ajuste", "fechaAjuste", "estado", "fechaRenta", "fechaEntrega", "fechaDevolucion", "anticipoEfectivo", "anticipoTarjeta", "pendienteEfectivo", "pendienteTarjeta", "liquidado", "notas", "telefono", "bastilla", "busto", "tirantes", "mangaPuno", "cintura", "espalda") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *',
+         [ name, productId || null, isTrue(bolso) ? '1' : '0', isTrue(aretes) ? '1' : '0', isTrue(ajuste) ? '1' : '0', fechaAjustes || null, estado, fechaRenta || null, fechaEntrega || null, fechaDevolucion || null, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, isTrue(liquidado) ? '1' : '0', notas, telefono, bastilla, busto, tirantes, mangaPuno, cintura, espalda]
       );
       const reservaId = ventasResult.rows[0].id;
 
@@ -232,6 +235,76 @@ app.post('/api/ventas', verificarToken, esAdmin, async (req, res) => {
    } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error al crear la venta' });
+   }
+});
+
+// Endpoint para actualizar formulario de ventas
+app.put('/api/ventas/:id', verificarToken, esAdmin, async (req, res) => {
+   const { id } = req.params; // Obtenemos el ID de la URL
+   const { name, productId, bolso, aretes, ajuste, fechaAjuste, fechaRenta, fechaEntrega, fechaDevolucion, anticipoEfectivo, anticipoTarjeta, pendienteEfectivo, pendienteTarjeta, liquidado, notas, telefono, bastilla, busto, tirantes, mangaPuno, cintura, espalda } = req.body;
+   console.log('Parametros recividos', req.body);
+   try {
+      const isTrue = (val) => val === true || val === 1 || val === '1';      
+      const result = await db.query(
+         `UPDATE ventas SET 
+            "name" = $1, 
+            "productId" = $2, 
+            "bolso" = $3, 
+            "aretes" = $4, 
+            "ajuste" = $5, 
+            "fechaAjuste" = $6, 
+            "fechaRenta" = $7, 
+            "fechaEntrega" = $8, 
+            "fechaDevolucion" = $9, 
+            "anticipoEfectivo" = $10, 
+            "anticipoTarjeta" = $11, 
+            "pendienteEfectivo" = $12, 
+            "pendienteTarjeta" = $13, 
+            "liquidado" = $14, 
+            "notas" = $15, 
+            "telefono" = $16,
+            "bastilla" = $17,
+            "busto" = $18,
+            "tirantes" = $19,
+            "mangaPuno" = $20,
+            "cintura" = $21,
+            "espalda" = $22
+          WHERE id = $23 RETURNING *`,
+         [ 
+            name, 
+            productId || null, 
+            isTrue(bolso) ? '1' : '0', 
+            isTrue(aretes) ? '1' : '0', 
+            isTrue(ajuste) ? '1' : '0', 
+            fechaAjuste || null, 
+            fechaRenta || null, 
+            fechaEntrega || null, 
+            fechaDevolucion || null, 
+            anticipoEfectivo, 
+            anticipoTarjeta, 
+            pendienteEfectivo, 
+            pendienteTarjeta, 
+            isTrue(liquidado) ? '1' : '0', 
+            notas, 
+            telefono,
+            bastilla, 
+            busto, 
+            tirantes, 
+            mangaPuno, 
+            cintura, 
+            espalda,
+            id // El ID para la cláusula WHERE
+         ]
+      );
+
+      if (result.rowCount === 0) {
+         return res.status(404).json({ error: 'Venta no encontrada' });
+      }
+
+      res.status(200).json({ mensaje: 'Venta actualizada correctamente', venta: result.rows[0] });
+   } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al actualizar la venta' });
    }
 });
 
