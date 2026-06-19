@@ -140,6 +140,7 @@ const handleVentasChange = (e) => {
          setVentasForm((prev) => ({
             ...prev,
             ajuste: false,
+            fechaAjuste: '',
             bastilla: '',
             busto: '',
             tirantes: '',

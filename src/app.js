@@ -319,6 +319,23 @@ app.get('/api/rentas', verificarToken, esAdmin, async (req, res) => {
    }
 });
 
+app.get('/api/rentas2', verificarToken, esAdmin, async (req, res)=>{
+   try{
+      const query = `select 
+         v.*, 
+         p.name as producto_nombre,
+         p.precio_renta,
+         ip.name as imagen_nombre
+         from ventas v inner join productos p on v."productId" = p.id
+         left join imagen_productos ip on p.id=ip.id_imagen where ip.orden = 1`;
+      const result = await db.query(query);
+      res.json(result.rows);
+   }catch(error){
+      console.error(error);
+      res.status(500).json({error: 'Error al conseguir Rentas 2'})
+   }
+});
+
 // Endpoint para actualizar el estado de una renta
 app.put('/api/rentas/:id', verificarToken, esAdmin, async (req, res) => {
    const { id } = req.params;       // Captura el ID desde la URL

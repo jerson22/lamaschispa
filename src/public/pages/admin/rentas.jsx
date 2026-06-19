@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Rentas() {
    const [rentas, setRentas] = useState([]);
-   const [productos, setProductos] = useState([]);
    const navigate = useNavigate();
 
    const [filtros, setFiltros] = useState({
@@ -20,17 +19,11 @@ export default function Rentas() {
       
       const fetchData = async () => {
          try {
-            const responseRentas = await fetch('/api/rentas', {
+            const responseRentas = await fetch('/api/rentas2', {
                headers: { 'auth-token': token }
             });
             const dataRentas = await responseRentas.json();
             setRentas(dataRentas);
-
-            const responseProductos = await fetch('/api/productos', {
-               headers: { 'auth-token': token }
-            });
-            const dataProductos = await responseProductos.json();
-            setProductos(dataProductos);
             
          } catch (error) {
             console.error('Error fetching data:', error);
@@ -49,10 +42,18 @@ export default function Rentas() {
    };
 
    const obtenerRentasFiltradas = () => {
-      if (!Array.isArray(rentas)) return [];
+      if (!Array.isArray(rentas)) return []; 
 
       const filtradas = rentas.filter((renta) => {
-         if (filtros.preset === 'todos') return true;
+         // 🔥 REGLA DE LA OPCIÓN A:
+         // Si el usuario seleccionó una fecha específica (no "todas") y este registro NO tiene esa fecha,
+         // se oculta de inmediato (devolvemos false), sin importar lo que diga el rango de tiempo.
+         if (filtros.tipoFecha !== 'todas' && !renta[filtros.tipoFecha]) {
+            return false; 
+         }
+
+         // Si pasó el filtro estricto anterior y el rango es "Ver Todas", le damos pase libre
+         if (filtros.preset === 'todos') return true; 
 
          const verificarFechaIndividual = (fechaString) => {
             if (!fechaString) return false;
@@ -64,7 +65,7 @@ export default function Rentas() {
             const stringHoy = hoy.toISOString().split('T')[0];
 
             if (filtros.preset === 'hoy') {
-               return stringRenta === stringHoy;
+               return stringRenta === stringHoy; 
             }
 
             if (filtros.preset === 'semana') {
@@ -103,7 +104,8 @@ export default function Rentas() {
             return (
                verificarFechaIndividual(renta.fechaEntrega) ||
                verificarFechaIndividual(renta.fechaDevolucion) ||
-               verificarFechaIndividual(renta.fechaAjuste)
+               verificarFechaIndividual(renta.fechaAjuste) ||
+               verificarFechaIndividual(renta.fechaRenta)
             );
          }
 
@@ -181,6 +183,7 @@ export default function Rentas() {
                   <option value="fechaEntrega">Fecha de Entrega</option>
                   <option value="fechaDevolucion">Fecha de Devolución</option>
                   <option value="fechaAjuste">Fecha de Ajuste</option>
+                  <option value="fechaRenta">Fecha de Renta</option>
                </select>
             </div>
 
@@ -227,8 +230,7 @@ export default function Rentas() {
                <tr>
                   <th>ID</th>
                   <th style={{ textAlign: 'center' }}>Liquidado</th> 
-                  <th>Nombre</th>
-                  <th>Teléfono</th>
+                  <th>Vestido</th>
                   <th>Fecha de Entrega</th>
                   <th>Estado</th>
                   <th>Fecha de Devolución</th>
@@ -238,9 +240,8 @@ export default function Rentas() {
             <tbody>
                {Array.isArray(rentasFiltradas) && rentasFiltradas.map((renta, index) => {
                   
-                  const vestidoEncontrado = productos.find(p => p.id === renta.productId);
-                  const nombreVestido = vestidoEncontrado ? vestidoEncontrado.name : 'No especificado / Cargando...';
-                  const precioDeRenta = vestidoEncontrado ? Number(vestidoEncontrado.precio_renta || 0) : 0;
+                  const nombreVestido = renta.producto_nombre ? renta.producto_nombre : 'No especificado / Cargando...';
+                  const precioDeRenta = renta.precio_renta ? Number(renta.precio_renta || 0) : 0;
 
                   const totalAnticipos = Number(renta.anticipoEfectivo || 0) + Number(renta.anticipoTarjeta || 0);
                   const faltaPorPagarCalculado = precioDeRenta - totalAnticipos;
@@ -260,11 +261,9 @@ export default function Rentas() {
                               <h4>Resumen de Renta {renta.id}</h4>
                               
                               <div className="tooltip-content-grid">
-                                 {/* Columna 1: Ajustes de Costura */}
                                  <div className="tooltip-col">
                                     <p className="tooltip-seccion-titulo">📏 Ajustes de Costura</p>
                                     
-                                    {/* Mantiene la condición AND segura solicitada anteriormente */}
                                     {tieneAjuste && renta.fechaAjuste && (
                                        <p className="tooltip-fecha-ajuste-top">
                                           📅 <strong>Cita de ajuste:</strong> {new Date(renta.fechaAjuste).toLocaleDateString('es-ES', {day: 'numeric', month: 'short'})}
@@ -285,11 +284,19 @@ export default function Rentas() {
                                     )}
                                  </div>
 
-                                 {/* Columna 2: Vestido y Finanzas Dinámicas */}
                                  <div className="tooltip-col">
                                     <p className="tooltip-seccion-titulo">Vestido</p>
                                     <p className="tooltip-vestido-nombre">✨ {nombreVestido}</p>
+                                    <img src={`/images/${renta.imagen_nombre}`} style={{width:'150px', borderRadius:'10px'}} alt="Vestido"/>
+                                 </div>
 
+                                 <div className="tooltip-col">
+                                    <p className="tooltip-seccion-titulo">📍 Cliente</p>
+                                    <div style={{background: '#fdecfa', fontSize:'0.8rem', padding:'10px', borderRadius:'8px'}}>
+                                       <p><strong>Nombre: </strong>{renta.name}</p>
+                                       <p><strong>Teléfono: </strong>{renta.telefono}</p>
+                                       <p><strong>Fecha Renta: </strong>{renta.fechaRenta ? new Date(renta.fechaRenta).toLocaleDateString('es-ES', opciones) : 'N/A'}</p>
+                                    </div>
                                     <p className="tooltip-seccion-titulo">💰 Finanzas y Cuenta</p>
                                     <div className="tooltip-finanzas-box">
                                        <p><strong>Precio Renta:</strong> ${precioDeRenta}</p> 
@@ -304,7 +311,6 @@ export default function Rentas() {
                                     </div>
                                  </div>
 
-                                 {/* Columna 3: Complementos y Notas Generales */}
                                  <div className="tooltip-col">
                                     <p className="tooltip-seccion-titulo">👜 Complementos</p>
                                     <div className="tooltip-grid-mini" style={{ marginBottom: tieneNotas ? '14px' : '0' }}>
@@ -329,11 +335,9 @@ export default function Rentas() {
                            </span>
                         </td>
 
-                        <td>{renta.name}</td>
-                        <td>{renta.telefono}</td>
+                        <td>{renta.producto_nombre}</td>
                         <td>{renta.fechaEntrega ? new Date(renta.fechaEntrega).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
                         
-                        {/* RESTAURADO: Volvió a la clase limpia original sin inyección de colores de fondo */}
                         <td>
                            <select 
                               className="select-estado-neumorphic"
@@ -425,6 +429,7 @@ export default function Rentas() {
                   text-align: left;
                   border-bottom: 1px solid #e5e7eb;
                   vertical-align: middle;
+                  font-size: 0.9rem;
                }
 
                .rentas-table th:first-child {
@@ -451,7 +456,6 @@ export default function Rentas() {
                   color: #374151;
                }
 
-               /* TOOLTIP FLOTANTE CONSTANTE EN 3 COLUMNAS */
                .id-cell-tooltip {
                   position: relative; 
                   cursor: pointer;       
@@ -518,7 +522,7 @@ export default function Rentas() {
 
                .tooltip-content-grid {
                   display: grid;
-                  grid-template-columns: repeat(3, 1fr); 
+                  grid-template-columns: repeat(4, 1fr); 
                   gap: 16px;
                }
 
@@ -627,7 +631,6 @@ export default function Rentas() {
                   overflow-y: auto;  
                }
 
-               /* ICONO REDONDO LIQUIDADO */
                .icono-liquidado-neumorphic {
                   width: 28px;
                   height: 28px;
@@ -648,19 +651,34 @@ export default function Rentas() {
                   color: #991b1b;
                }
                
-               /* RESTAURADO: ESTILO ORIGINAL NEUMÓRFICO PARA EL SELECTOR DE ESTADOS */
                .select-estado-neumorphic {
+                  /* 🍎 CORRECCIÓN PARA MAC Y SAFARI: Elimina el diseño forzado de Apple */
+                  -webkit-appearance: none;  
+                  -moz-appearance: none;
+                  appearance: none;          
+
                   border: none;
                   outline: none;
-                  padding: 8px 12px;
+                  
+                  /* Aumentamos el padding derecho (32px) para dejarle espacio a la nueva flecha */
+                  padding: 8px 32px 8px 12px; 
                   border-radius: 8px;
                   background: #ffffff;
                   color: #4b5563;
                   font-weight: 500;
                   cursor: pointer;
+                  
+                  /* Tus sombras neumórficas ahora sí se van a pintar en Mac */
                   box-shadow: inset 2px 2px 5px #bebebe, 
                               inset -2px -2px 5px #ffffff;
                   transition: all 0.3s ease;
+
+                  /* 💡 TRUCO EXTRA: Como quitamos el diseño de Apple, la flechita nativa desaparece. 
+                     Esta línea agrega una flecha minimalista y elegante en formato SVG */
+                  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                  background-repeat: no-repeat;
+                  background-position: right 12px center;
+                  background-size: 14px;
                }
 
                .select-estado-neumorphic:focus {
@@ -669,7 +687,6 @@ export default function Rentas() {
                               0 0 4px rgba(59, 130, 246, 0.5); 
                }
                
-               /* Botones Neumórficos */
                .btn-neumorphic {
                   border: none;
                   outline: none;
