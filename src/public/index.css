@@ -140,6 +140,37 @@ body {
 .filtro-select:focus {
    border-color: #db2777;
 }
+/* Añadimos .filtros-container antes para darle más fuerza al selector (especificidad) */
+.filtros-container .filtro-btn {
+   /* 🎨 IGUALANDO A LOS SELECTORES */
+   background: white !important;      /* Mismo fondo blanco que los select */
+   border: 1px solid #e5e7eb;         /* Cambiado el borde negro por el gris claro de los select */
+   border-radius: 10px;               /* Cambiado de 8px a 10px para que tenga el mismo redondeado */
+   color: #be185d;                    /* Mantiene el color rosa para tu icono */
+
+   /* 🔍 ICONO MÁS GRANDE */
+   font-size: 1.35rem;                /* Agiganta el icono sin deformar ni agrandar el botón */
+
+   /* Centrado perfecto del icono */
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   
+   /* Tamaño idéntico para que quede cuadrado y alineado */
+   width: 43px;                       /* Subido a 43px para nivelarse milimétricamente con el alto del select */
+   height: 43px;                      
+   padding: 0;                        
+   cursor: pointer;
+   box-sizing: border-box;            /* Evita que el borde altere el tamaño */
+   
+   transition: all 0.2s ease;
+}
+
+/* Efecto Hover interactivo que combina con tus enfoques (focus) */
+.filtros-container .filtro-btn:hover {
+   background: #fdf2f8 !important;    /* Un fondo rosa súper sutil al pasar el mouse */
+   border-color: #db2777;             /* El borde se vuelve rosa brillante como tus inputs al hacer focus */
+}
 
 .vestidos-grid {
    display: grid;

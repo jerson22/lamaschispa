@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
+import { AiOutlineClear } from "react-icons/ai";
 
 const Vestidos = () => {
    const [vestidos, setVestidos] = useState([]);
@@ -56,6 +57,14 @@ const Vestidos = () => {
       if (!texto) return '';
       return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
    };
+   
+   const clearFilters = ()=>{
+      setSelectedColor('');
+      setSelectedTalla('');
+      setSelectedSilueta('');
+      setSelectedMangas('');
+      setSearchTerm('');
+   };
 
    return (
       <div className="vestidos-container">
@@ -97,6 +106,9 @@ const Vestidos = () => {
                   <option key={mangas} value={mangas}>{mayus(mangas)}</option>
                ))}
             </select>
+            <button className="filtro-btn" onClick={clearFilters}>
+               <AiOutlineClear />
+            </button>
          </div>
 
          <div className="vestidos-grid">
