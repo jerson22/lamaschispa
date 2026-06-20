@@ -27,7 +27,7 @@ export default function ProductCard({ product }) {
    };
 
    return (
-      <div className="product-card">
+      <div className="product-card" onClick={() => navigate(`/producto/${product.id}`)} style={{cursor: 'pointer'}}>
          <div className={`product-image-container ${isAccessory ? 'is-accessory' : ''}`}>
             {imagenes.length > 0 ? (
                <img
@@ -39,7 +39,8 @@ export default function ProductCard({ product }) {
                <div className="product-placeholder">👗</div>
             )}
 
-            {imagenes.length > 1 && (
+            {/* Para poner las flechas para efecto carrusel */}
+            {/* {imagenes.length > 1 && (
                <>
                   <button className="carousel-button prev" onClick={prevImage} aria-label="Imagen anterior">❮</button>
                   <button className="carousel-button next" onClick={nextImage} aria-label="Siguiente imagen">❯</button>
@@ -56,17 +57,17 @@ export default function ProductCard({ product }) {
                      ))}
                   </div>
                </>
-            )}
+            )} */}
 
             <div className="product-badges">
                {product.talla && (<span className="badge-talla">{product.talla}</span>)}
             </div>
          </div>
-         <div className="product-info" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+         <div className="product-info" style={{ display: 'flex', flexDirection: 'column', width: '90%' }}>
     
             {/* 1. FILA SUPERIOR: El título ocupa todo el ancho */}
             <div className="product-title-row" style={{ width: '100%' }}>
-               <h3 className="product-nombre" style={{ margin: '0 0 10px 0' }}>{product.name}</h3>
+               <h3 className="product-nombre" style={{ margin: '0 0 4px 0' }}>{product.name}</h3>
             </div>
 
             {/* 2. FILA INFERIOR: Detalles a la izquierda y botón a la derecha */}
@@ -79,11 +80,11 @@ export default function ProductCard({ product }) {
                </div>
                
                {/* BOTÓN (Derecha - Corregido con marginRight) */}
-               <div className="product-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginLeft: '5px', marginRight: '50px' }}>
+               {/* <div className="product-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginLeft: '5px', marginRight: '50px' }}>
                   <button className="product-button" onClick={() => navigate(`/producto/${product.id}`)}>
                      Ver
                   </button>
-               </div>
+               </div> */}
 
             </div>
          

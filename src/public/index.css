@@ -188,9 +188,12 @@ body {
    flex-direction: column;
 }
 
-.product-card:hover {
-   transform: translateY(-10px);
-   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+/* Este efecto SOLO se activará en dispositivos que soporten hover real (mouse) */
+@media (hover: hover) {
+   .product-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+   }
 }
 
 .product-image-container {
@@ -310,14 +313,14 @@ body {
 }
 
 .product-info {
-   padding: 20px;
+   padding: 16px;
    flex-grow: 1;
    display: flex;
    flex-direction: column;
 }
 
 .product-nombre {
-   margin: 0 0 10px 0;
+   margin: 0 0 4px 0;
    font-size: 1.4rem;
    /* text-align: center; */
    color: #1f2937;
@@ -325,7 +328,7 @@ body {
 }
 
 .product-details {
-   margin-bottom: 20px;
+   /* margin-bottom: 10px; */
    font-size: 0.85rem;
    color: #6b7280;
 }
