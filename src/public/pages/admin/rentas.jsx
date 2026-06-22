@@ -2,6 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
 
+// 💡 FUNCIÓN ASISTENTE: Evita que las fechas se desfasen o se resten un día en la tabla
+const formatearFechaSafe = (fechaString, opciones) => {
+   if (!fechaString) return 'N/A';
+   
+   // Si es una fecha limpia de la base de datos (ej: "2026-06-20" sin hora ni 'T')
+   if (!fechaString.includes('T') && fechaString.length <= 10) {
+      const [year, month, day] = fechaString.split('-').map(Number);
+      // Creamos la fecha en modo local estricto
+      return new Date(year, month - 1, day).toLocaleDateString('es-ES', opciones);
+   }
+   
+   // Si es un Timestamp completo con hora
+   return new Date(fechaString).toLocaleDateString('es-ES', opciones);
+};
+
 export default function Rentas() {
    const [rentas, setRentas] = useState([]);
    const navigate = useNavigate();
@@ -37,63 +52,71 @@ export default function Rentas() {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC'
+      year: 'numeric'
    };
 
    const obtenerRentasFiltradas = () => {
       if (!Array.isArray(rentas)) return []; 
 
       const filtradas = rentas.filter((renta) => {
-         // 🔥 REGLA DE LA OPCIÓN A:
-         // Si el usuario seleccionó una fecha específica (no "todas") y este registro NO tiene esa fecha,
-         // se oculta de inmediato (devolvemos false), sin importar lo que diga el rango de tiempo.
+         // Si el usuario seleccionó una fecha específica y este registro NO la tiene, se oculta
          if (filtros.tipoFecha !== 'todas' && !renta[filtros.tipoFecha]) {
             return false; 
          }
 
-         // Si pasó el filtro estricto anterior y el rango es "Ver Todas", le damos pase libre
          if (filtros.preset === 'todos') return true; 
 
          const verificarFechaIndividual = (fechaString) => {
             if (!fechaString) return false;
 
-            const fechaRenta = new Date(fechaString);
+            // 1. Extraer la fecha del registro en formato limpio YYYY-MM-DD local
+            let stringRenta = "";
+            if (fechaString.includes('T')) {
+               const d = new Date(fechaString);
+               stringRenta = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            } else {
+               stringRenta = fechaString.split(' ')[0];
+            }
+
+            // 2. Obtener la fecha de HOY en formato estricto LOCAL (Evita desfase de horas)
             const hoy = new Date();
+            const stringHoy = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
 
-            const stringRenta = fechaRenta.toISOString().split('T')[0];
-            const stringHoy = hoy.toISOString().split('T')[0];
-
+            // Filtro: Hoy
             if (filtros.preset === 'hoy') {
                return stringRenta === stringHoy; 
             }
 
+            // Para rangos estables de "semana" y "personalizado" creamos objetos Date locales a mediodía
+            const [rYear, rMonth, rDay] = stringRenta.split('-').map(Number);
+            const fRentaComparar = new Date(rYear, rMonth - 1, rDay, 12, 0, 0);
+
+            // Filtro: Esta Semana
             if (filtros.preset === 'semana') {
                const tempHoy = new Date();
                tempHoy.setHours(0, 0, 0, 0);
                
                const diaSemana = tempHoy.getDay();
                const diferenciaLunes = tempHoy.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1); 
-               const lunes = new Date(tempHoy.setDate(diferenciaLunes));
+               const lunes = new Date(tempHoy.getFullYear(), tempHoy.getMonth(), diferenciaLunes, 0, 0, 0);
                
                const domingo = new Date(lunes);
                domingo.setDate(lunes.getDate() + 6);
                domingo.setHours(23, 59, 59, 999);
 
-               const fRentaComparar = new Date(fechaString);
                return fRentaComparar >= lunes && fRentaComparar <= domingo;
             }
 
+            // Filtro: Rango Personalizado
             if (filtros.preset === 'personalizado') {
                if (!filtros.fechaInicio || !filtros.fechaFin) return true;
 
-               const inicio = new Date(filtros.fechaInicio);
-               inicio.setHours(0, 0, 0, 0);
+               const [iYear, iMonth, iDay] = filtros.fechaInicio.split('-').map(Number);
+               const inicio = new Date(iYear, iMonth - 1, iDay, 0, 0, 0);
 
-               const fin = new Date(filtros.fechaFin);
-               fin.setHours(23, 59, 59, 999);
+               const [fYear, fMonth, fDay] = filtros.fechaFin.split('-').map(Number);
+               const fin = new Date(fYear, fMonth - 1, fDay, 23, 59, 59, 999);
 
-               const fRentaComparar = new Date(fechaString);
                return fRentaComparar >= inicio && fRentaComparar <= fin;
             }
 
@@ -112,11 +135,8 @@ export default function Rentas() {
          return verificarFechaIndividual(renta[filtros.tipoFecha]);
       });
 
-      return filtradas.sort((a, b) => {
-         if (!a.fechaEntrega) return 1;  
-         if (!b.fechaEntrega) return -1;
-         return new Date(a.fechaEntrega) - new Date(b.fechaEntrega);
-      });
+      // Se respeta el orden nativo por ID que ya trae tu backend (Opción C)
+      return filtradas;
    };
 
    const rentasFiltradas = obtenerRentasFiltradas();
@@ -266,7 +286,7 @@ export default function Rentas() {
                                     
                                     {tieneAjuste && renta.fechaAjuste && (
                                        <p className="tooltip-fecha-ajuste-top">
-                                          📅 <strong>Cita de ajuste:</strong> {new Date(renta.fechaAjuste).toLocaleDateString('es-ES', {day: 'numeric', month: 'short'})}
+                                          📅 <strong>Cita de ajuste:</strong> {formatearFechaSafe(renta.fechaAjuste, {day: 'numeric', month: 'short'})}
                                        </p>
                                     )}
 
@@ -295,7 +315,7 @@ export default function Rentas() {
                                     <div style={{background: '#fdecfa', fontSize:'0.8rem', padding:'10px', borderRadius:'8px'}}>
                                        <p><strong>Nombre: </strong>{renta.name}</p>
                                        <p><strong>Teléfono: </strong>{renta.telefono}</p>
-                                       <p><strong>Fecha Renta: </strong>{renta.fechaRenta ? new Date(renta.fechaRenta).toLocaleDateString('es-ES', opciones) : 'N/A'}</p>
+                                       <p><strong>Fecha Renta: </strong>{formatearFechaSafe(renta.fechaRenta, opciones)}</p>
                                     </div>
                                     <p className="tooltip-seccion-titulo">💰 Finanzas y Cuenta</p>
                                     <div className="tooltip-finanzas-box">
@@ -336,7 +356,7 @@ export default function Rentas() {
                         </td>
 
                         <td>{renta.producto_nombre}</td>
-                        <td>{renta.fechaEntrega ? new Date(renta.fechaEntrega).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
+                        <td>{formatearFechaSafe(renta.fechaEntrega, opciones)}</td>
                         
                         <td>
                            <select 
@@ -354,7 +374,7 @@ export default function Rentas() {
                            </select>
                         </td>
                         
-                        <td>{renta.fechaDevolucion ? new Date(renta.fechaDevolucion).toLocaleDateString('es-ES', opciones) : 'N/A'}</td>
+                        <td>{formatearFechaSafe(renta.fechaDevolucion, opciones)}</td>
 
                         <td>
                            <div className="acciones-container">
@@ -398,6 +418,7 @@ export default function Rentas() {
                }
 
                .filtro-grupo label {
+                  margin: 0;
                   font-size: 0.85rem;
                   font-weight: 600;
                   color: #6b7280;
@@ -652,7 +673,6 @@ export default function Rentas() {
                }
                
                .select-estado-neumorphic {
-                  /* 🍎 CORRECCIÓN PARA MAC Y SAFARI: Elimina el diseño forzado de Apple */
                   -webkit-appearance: none;  
                   -moz-appearance: none;
                   appearance: none;          
@@ -660,7 +680,6 @@ export default function Rentas() {
                   border: none;
                   outline: none;
                   
-                  /* Aumentamos el padding derecho (32px) para dejarle espacio a la nueva flecha */
                   padding: 8px 32px 8px 12px; 
                   border-radius: 8px;
                   background: #ffffff;
@@ -668,13 +687,10 @@ export default function Rentas() {
                   font-weight: 500;
                   cursor: pointer;
                   
-                  /* Tus sombras neumórficas ahora sí se van a pintar en Mac */
                   box-shadow: inset 2px 2px 5px #bebebe, 
                               inset -2px -2px 5px #ffffff;
                   transition: all 0.3s ease;
 
-                  /* 💡 TRUCO EXTRA: Como quitamos el diseño de Apple, la flechita nativa desaparece. 
-                     Esta línea agrega una flecha minimalista y elegante en formato SVG */
                   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
                   background-repeat: no-repeat;
                   background-position: right 12px center;

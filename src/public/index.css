@@ -148,22 +148,31 @@ body {
    border-radius: 10px;               /* Cambiado de 8px a 10px para que tenga el mismo redondeado */
    color: #be185d;                    /* Mantiene el color rosa para tu icono */
 
-   /* 🔍 ICONO MÁS GRANDE */
-   font-size: 1.35rem;                /* Agiganta el icono sin deformar ni agrandar el botón */
-
-   /* Centrado perfecto del icono */
+   /* Centrado perfecto del icono y el texto */
    display: inline-flex;
    align-items: center;
    justify-content: center;
+   gap: 8px;                          /* Separación entre icono y texto */
    
-   /* Tamaño idéntico para que quede cuadrado y alineado */
-   width: 43px;                       /* Subido a 43px para nivelarse milimétricamente con el alto del select */
-   height: 43px;                      
-   padding: 0;                        
+   /* 🛠️ CORRECCIÓN DE TAMAÑO (Para que quepa el texto) */
+   width: auto;                       /* Cambiado de 43px a auto para que se estire con el texto */
+   height: 43px;                      /* Se queda en 43px para nivelarse milimétricamente con el alto del select */
+   padding: 0 16px;                   /* Añadimos espacio acolchado a los lados para que el texto respire */
+   
    cursor: pointer;
    box-sizing: border-box;            /* Evita que el borde altere el tamaño */
-   
    transition: all 0.2s ease;
+}
+
+/* 🔍 CONTROL DEL TAMAÑO DEL ICONO INDEPENDIENTE */
+.filtros-container .filtro-btn svg {
+   font-size: 1.35rem;                /* El icono se queda grande y estilizado */
+}
+
+/* 🔍 CONTROL DEL TAMAÑO DE LAS LETRAS */
+.filtros-container .filtro-btn span {
+   font-size: 0.9rem;                 /* Un tamaño de letra balanceado y elegante para "Limpiar" */
+   font-weight: 600;                  /* Letras semi-negritas para que combinen con la interfaz */
 }
 
 /* Efecto Hover interactivo que combina con tus enfoques (focus) */
@@ -171,7 +180,6 @@ body {
    background: #fdf2f8 !important;    /* Un fondo rosa súper sutil al pasar el mouse */
    border-color: #db2777;             /* El borde se vuelve rosa brillante como tus inputs al hacer focus */
 }
-
 .vestidos-grid {
    display: grid;
    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

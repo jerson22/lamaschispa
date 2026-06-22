@@ -327,7 +327,8 @@ app.get('/api/rentas2', verificarToken, esAdmin, async (req, res)=>{
          p.precio_renta,
          ip.name as imagen_nombre
          from ventas v inner join productos p on v."productId" = p.id
-         left join imagen_productos ip on p.id=ip.id_imagen where ip.orden = 1`;
+         left join imagen_productos ip on p.id=ip.id_imagen where ip.orden = 1
+         order by v.id desc`;
       const result = await db.query(query);
       res.json(result.rows);
    }catch(error){

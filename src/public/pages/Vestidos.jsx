@@ -80,34 +80,35 @@ const Vestidos = () => {
             />
 
             <select className="filtro-select" value={selectedTalla} onChange={(e) => setSelectedTalla(e.target.value)}>
-               <option value="">Todas las Tallas</option>
+               <option value="">Tallas</option>
                {uniqueTallas.map(talla => (
                   <option key={talla} value={talla}>{talla.toUpperCase()}</option>
                ))}
             </select>
 
             <select className="filtro-select" value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)}>
-               <option value="">Todos los Colores</option>
+               <option value="">Colores</option>
                {uniqueColors.map(color => (
                   <option key={color} value={color}>{mayus(color)}</option>
                ))}
             </select>
 
             <select className="filtro-select" value={selectedSilueta} onChange={(e) => setSelectedSilueta(e.target.value)}>
-               <option value="">Todas las Siluetas</option>
+               <option value="">Siluetas</option>
                {uniqueSiluetas.map(silueta => (
                   <option key={silueta} value={silueta}>Corte {mayus(silueta)}</option>
                ))}
             </select>
 
             <select className="filtro-select" value={selectedMangas} onChange={(e) => setSelectedMangas(e.target.value)}>
-               <option value="">Todas las Mangas</option>
+               <option value="">Mangas</option>
                {uniqueMangas.map(mangas => (
                   <option key={mangas} value={mangas}>{mayus(mangas)}</option>
                ))}
             </select>
             <button className="filtro-btn" onClick={clearFilters}>
                <AiOutlineClear />
+               <span>Limpiar</span>
             </button>
          </div>
 
