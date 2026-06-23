@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { MdEdit, MdDelete } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
 
-// 💡 FUNCIÓN ASISTENTE: Evita que las fechas se desfasen o se resten un día en la tabla
+// 💡 FUNCIÓN ASISTENTE CORREGIDA: Extrae estrictamente la fecha textual (YYYY-MM-DD) e ignora la zona horaria
 const formatearFechaSafe = (fechaString, opciones) => {
    if (!fechaString) return 'N/A';
    
-   // Si es una fecha limpia de la base de datos (ej: "2026-06-20" sin hora ni 'T')
-   if (!fechaString.includes('T') && fechaString.length <= 10) {
-      const [year, month, day] = fechaString.split('-').map(Number);
-      // Creamos la fecha en modo local estricto
+   // Tomamos solo los primeros 10 caracteres (YYYY-MM-DD), ignorando 'T', horas o 'Z'
+   const fechaLimpia = fechaString.slice(0, 10);
+   
+   if (fechaLimpia.includes('-') && fechaLimpia.length === 10) {
+      const [year, month, day] = fechaLimpia.split('-').map(Number);
+      // Creamos la fecha en modo local estricto (año, mes base 0, día)
       return new Date(year, month - 1, day).toLocaleDateString('es-ES', opciones);
    }
    
-   // Si es un Timestamp completo con hora
    return new Date(fechaString).toLocaleDateString('es-ES', opciones);
 };
 
@@ -59,7 +60,6 @@ export default function Rentas() {
       if (!Array.isArray(rentas)) return []; 
 
       const filtradas = rentas.filter((renta) => {
-         // Si el usuario seleccionó una fecha específica y este registro NO la tiene, se oculta
          if (filtros.tipoFecha !== 'todas' && !renta[filtros.tipoFecha]) {
             return false; 
          }
@@ -69,16 +69,11 @@ export default function Rentas() {
          const verificarFechaIndividual = (fechaString) => {
             if (!fechaString) return false;
 
-            // 1. Extraer la fecha del registro en formato limpio YYYY-MM-DD local
-            let stringRenta = "";
-            if (fechaString.includes('T')) {
-               const d = new Date(fechaString);
-               stringRenta = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            } else {
-               stringRenta = fechaString.split(' ')[0];
-            }
+            // 🛠️ CORRECCIÓN AQUÍ: Extraemos el formato YYYY-MM-DD directamente del texto.
+            // Esto evita que JavaScript reste un día al intentar convertir la hora UTC a local.
+            const stringRenta = fechaString.slice(0, 10);
 
-            // 2. Obtener la fecha de HOY en formato estricto LOCAL (Evita desfase de horas)
+            // 2. Obtener la fecha de HOY en formato estricto LOCAL
             const hoy = new Date();
             const stringHoy = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
 
@@ -87,7 +82,7 @@ export default function Rentas() {
                return stringRenta === stringHoy; 
             }
 
-            // Para rangos estables de "semana" y "personalizado" creamos objetos Date locales a mediodía
+            // Para rangos estables creamos objetos Date locales a mediodía
             const [rYear, rMonth, rDay] = stringRenta.split('-').map(Number);
             const fRentaComparar = new Date(rYear, rMonth - 1, rDay, 12, 0, 0);
 
@@ -135,7 +130,6 @@ export default function Rentas() {
          return verificarFechaIndividual(renta[filtros.tipoFecha]);
       });
 
-      // Se respeta el orden nativo por ID que ya trae tu backend (Opción C)
       return filtradas;
    };
 
