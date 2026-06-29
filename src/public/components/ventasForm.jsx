@@ -450,6 +450,9 @@ const handleVentasChange = (e) => {
                   <button type="submit" className="save-btn">
                      {editandoFlag ? 'Guardar Cambios' : 'Registrar Renta' }
                   </button>
+                  <button type="" className='save-btn' onClick="">
+                     Generar Recibo
+                  </button>
                </div>
             </form>
          </section>

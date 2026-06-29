@@ -437,7 +437,7 @@ app.get('/api/vestidos', async (req, res) => {
                ) as imagenes
          FROM productos p 
          WHERE p.name IS NOT NULL AND p.vestido = '1'
-         ORDER BY p.id ASC
+         ORDER BY p.id DESC
       `;
       const result = await db.query(query);
       res.json(result.rows);
