@@ -45,8 +45,9 @@ export async function CrearReciboPDF(datosVenta) {
    const fechaDevolucionTexto = formatearFechaTexto(datosVenta.fechaDevolucion || datosVenta.fechaEntrega);
    const fechaAjustesTexto = formatearFechaTexto(datosVenta.fechaAjustes || datosVenta.fechaAjustes);
 
-   
-   const browser = await puppeteer.launch();
+   const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+   });   
    const page = await browser.newPage();   
    const htmlContenido = `
       <html>
