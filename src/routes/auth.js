@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import db from '../db/connection.js';
+
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('../db/connection');
 
 // Ruta para registrar usuarios (Tú la usarás para crear al Admin y clientes)
 router.post('/register', async (req, res) => {
@@ -40,7 +41,7 @@ router.post('/login', async (req, res) => {
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
-      // 3. GENERAR EL JWT (Aquí está el truco)
+      // 3. GENERAR EL JWT
       const token = jwt.sign(
          { id: user.id, rol: user.rol }, // Lo que queremos que el token "sepa"
          process.env.JWT_SECRET,          // Tu llave secreta del .env
@@ -68,4 +69,4 @@ router.get('/validate', (req, res) => {
    }
 });
 
-module.exports = router;
+export default router;

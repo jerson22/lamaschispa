@@ -1,14 +1,27 @@
-const path = require('path');
-const express = require('express');
+// 1. Importaciones de librerías externas (Node y npm)
+import { CrearReciboPDF } from './services/pdfService.js';
+import path from 'path';
+import express from 'express';
+import multer from 'multer';
+import fs from 'fs';
+import { fileURLToPath } from 'url'; // <-- Necesario para recuperar __dirname
+
+// 2. Importaciones de tus archivos locales
+// ⚠️ NOTA CRÍTICA: En modo "import", es OBLIGATORIO poner el ".js" al final de la ruta.
+import db from './db/connection.js';
+import authRoutes from './routes/auth.js';
+import { verificarToken, esAdmin } from './middlewares/auth.js';
+
+// 3. Recreamos __dirname (Ya que en ES Modules no existe por defecto)
+// Esto evita que Multer falle al buscar la carpeta 'public'
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 4. Inicialización de Express y variables
 const app = express();
-const db = require('./db/connection');
-const authRoutes = require('./routes/auth');
-const { verificarToken, esAdmin } = require('./middlewares/auth');
 const port = 3000;
 
-const multer = require('multer');
-const fs = require('fs');
-
+// 5. Configuración de Multer (Se queda exactamente igual gracias al paso 3)
 const storage = multer.diskStorage({
    destination: function (req, file, cb) {
       const dir = path.join(__dirname, 'public', 'images');
@@ -467,6 +480,55 @@ app.get('/api/accesorios', async (req, res) => {
    } catch (error) {
       console.error("Error en DB:", error.message);
       res.status(500).json({ error: 'Error en la base de datos', details: error.message });
+   }
+});
+
+//Crear PDFs de recibos
+app.post('/api/reciboPdf', verificarToken, esAdmin, async (req, res) => {
+   const datosVenta = req.body;
+   console.log("Los datos que llegan a la API:", datosVenta);         
+   
+   try {
+      // 1. SOLUCIÓN SEGURIDAD: Usamos consultas parametrizadas ($1 o ?) para evitar Inyección SQL
+      const query = `SELECT name, precio_renta FROM productos WHERE id = $1`;
+      const result = await db.query(query, [datosVenta.productId]);
+      
+      // 2. EXTRAER PRODUCTO: Dependiendo de tu librería (pg, mysql2), los datos vienen en lugares distintos.
+      // Si usas 'pg' de PostgreSQL es result.rows[0]. Si usas 'mysql2' suele ser result[0].
+      const producto = result.rows ? result.rows[0] : result[0];
+
+      // Validamos si el producto realmente existe en la base de datos
+      if (!producto) {
+         return res.status(404).json({ error: "El producto especificado no existe." });
+      }
+
+      // 3. CÁLCULO: Aseguramos que sean números usando parseFloat para evitar errores de texto
+      const precioVestido = parseFloat(producto.precio_renta);
+      const anticipoEfectivo = parseFloat(datosVenta.anticipoEfectivo || 0); // Asumo que el formulario envía 'anticipo'
+      const anticipoTarjeta = parseFloat(datosVenta.anticipoTarjeta || 0); // Asumo que el formulario envía 'anticipo'
+      const anticipoTotal = anticipoEfectivo + anticipoTarjeta
+      const diferenciaAPagar = precioVestido - anticipoTotal;
+
+      // 4. COMBINAR DATOS: Unimos lo que llegó del formulario con lo que trajimos de la BD
+      const datosCompletosPDF = {
+         ...datosVenta,                  // Copia todos los campos originales del formulario
+         nombreVestido: producto.name,   // Agrega el nombre desde la BD
+         precioVestido: precioVestido,   // Agrega el precio desde la BD
+         diferenciaAPagar: diferenciaAPagar, // Agrega el cálculo que hicimos
+         anticipoTotal: anticipoTotal
+      };
+
+      // 5. PASAR DATOS AL PDF: Ahora sí, enviamos el objeto con toda la información junta
+      const pdfBuffer = await CrearReciboPDF(datosCompletosPDF);
+
+      // 6. RESPUESTA: Enviamos el archivo al cliente
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="recibo_venta.pdf"');
+      res.send(pdfBuffer);
+
+   } catch (error) {
+      console.error("Error al generar PDF:", error);
+      res.status(500).json({ error: "No se pudo generar el PDF" });
    }
 });
 

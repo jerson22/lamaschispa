@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const verificarToken = (req, res, next) => {
    // 1. Obtener el token del header de la petición
@@ -23,4 +23,6 @@ const esAdmin = (req, res, next) => {
    next();
 };
 
-module.exports = { verificarToken, esAdmin };
+// ❌ ANTES: export default { verificarToken, esAdmin };
+// CORRECCIÓN: Quitamos el "default" para que coincida con las llaves { } de app.js
+export { verificarToken, esAdmin };

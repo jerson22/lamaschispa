@@ -1,5 +1,7 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+import pg from 'pg';
+import 'dotenv/config'; // <-- Forma moderna y limpia de cargar el .env
+
+const { Pool } = pg;
 
 // Creamos una instancia del Pool para manejar múltiples conexiones de forma eficiente
 const pool = new Pool({
@@ -20,7 +22,8 @@ pool.on('error', (err) => {
    process.exit(-1);
 });
 
-module.exports = {
+// Cambiamos module.exports por export default
+export default {
    query: (text, params) => pool.query(text, params),
    pool // Exportamos el pool por si se necesita para otras operaciones
 };

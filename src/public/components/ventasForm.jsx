@@ -129,40 +129,40 @@ export default function VentasForm() {
       }
    };
 
-// Manejar cuando cambia el formulario
-const handleVentasChange = (e) => {
-   const { name, value, type, checked } = e.target;
+   // Manejar cuando cambia el formulario
+   const handleVentasChange = (e) => {
+      const { name, value, type, checked } = e.target;
 
-   // Interceptamos específicamente el campo 'ajuste'
-   if (name === 'ajuste') {
-      if (!checked) {
-         // SI SE DESMARCA: Desactivamos el ajuste y limpiamos todas las medidas a vacías
-         setVentasForm((prev) => ({
-            ...prev,
-            ajuste: false,
-            fechaAjuste: '',
-            bastilla: '',
-            busto: '',
-            tirantes: '',
-            mangaPuno: '',
-            cintura: '',
-            espalda: ''
-         }));
+      // Interceptamos específicamente el campo 'ajuste'
+      if (name === 'ajuste') {
+         if (!checked) {
+            // SI SE DESMARCA: Desactivamos el ajuste y limpiamos todas las medidas a vacías
+            setVentasForm((prev) => ({
+               ...prev,
+               ajuste: false,
+               fechaAjuste: '',
+               bastilla: '',
+               busto: '',
+               tirantes: '',
+               mangaPuno: '',
+               cintura: '',
+               espalda: ''
+            }));
+         } else {
+            // SI SE MARCA: Solo activamos el ajuste (mantiene los datos existentes si venían del update)
+            setVentasForm((prev) => ({
+               ...prev,
+               ajuste: true
+            }));
+         }
       } else {
-         // SI SE MARCA: Solo activamos el ajuste (mantiene los datos existentes si venían del update)
-         setVentasForm((prev) => ({
-            ...prev,
-            ajuste: true
+         // LÓGICA ORIGINAL: Para cualquier otro input (texto, números u otros checkboxes)
+         setVentasForm((prev) => ({ 
+            ...prev, 
+            [name]: type === 'checkbox' ? checked : value 
          }));
       }
-   } else {
-      // LÓGICA ORIGINAL: Para cualquier otro input (texto, números u otros checkboxes)
-      setVentasForm((prev) => ({ 
-         ...prev, 
-         [name]: type === 'checkbox' ? checked : value 
-      }));
-   }
-};
+   };
 
    // FUNCIÓN CUANDO SE SELECCIONA UN PRODUCTO DEL DESPLEGABLE Productos
    const handleSelectProduct = (producto) => {
@@ -272,6 +272,39 @@ const handleVentasChange = (e) => {
          (p.talla && p.talla.toLowerCase().includes(term))
       );
    });
+
+
+   const handleEnviarRecibo = async (ventasForm) => {
+      try {
+         const response = await fetch('/api/reciboPdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json','auth-token': token },
+            body: JSON.stringify(ventasForm)
+         });
+
+         if (!response.ok) throw new Error("Error en el servidor");
+
+         // ⚠️ CRÍTICO: Esto transforma la respuesta del servidor en un archivo descargable
+         const blob = await response.blob(); 
+
+         // Crear el enlace invisible en el navegador para forzar la descarga
+         const urlDescarga = window.URL.createObjectURL(blob);
+         const linkTemporal = document.createElement('a');
+         linkTemporal.href = urlDescarga;
+         linkTemporal.download = `Recibo_Venta.pdf`; // Nombre del archivo
+
+         document.body.appendChild(linkTemporal);
+         linkTemporal.click(); // Simula el clic de descarga
+         linkTemporal.remove();
+         window.URL.revokeObjectURL(urlDescarga);
+
+         // alert("¡Recibo generado y descargado con éxito!");
+
+      } catch (error) {
+         console.error("Error al descargar:", error);
+         alert("No se pudo descargar el recibo");
+      }
+   };
 
    return (
       <div className="admin-container">
@@ -450,7 +483,7 @@ const handleVentasChange = (e) => {
                   <button type="submit" className="save-btn">
                      {editandoFlag ? 'Guardar Cambios' : 'Registrar Renta' }
                   </button>
-                  <button type="" className='save-btn' onClick="">
+                  <button type="button" className='save-btn' onClick={() => handleEnviarRecibo(ventasForm)}>
                      Generar Recibo
                   </button>
                </div>
